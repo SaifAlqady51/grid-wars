@@ -36,7 +36,7 @@ const lightTheme: Theme = {
     inactive: "gray",
     border: "#e7e7e7",
     surface: "#f8f8f8",
-    navigation: "#B5179E",
+    navigation: "#9D4EDD",
   },
   spacing: {
     xs: 4,
