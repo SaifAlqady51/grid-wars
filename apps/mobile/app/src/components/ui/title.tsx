@@ -1,4 +1,4 @@
-import { useTheme } from "../../context/theme-context";
+import { useTheme } from "@/context";
 import { TextProps, Text } from "react-native";
 
 interface TitleProps extends TextProps {
