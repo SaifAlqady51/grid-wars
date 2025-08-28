@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
-@Entity('users')
-export class User {
+@Entity('accounts')
+export class Account {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -18,7 +18,6 @@ export class User {
     name: 'username',
     type: 'varchar',
     length: 50,
-    unique: true,
     nullable: false,
   })
   username: string;
@@ -38,16 +37,8 @@ export class User {
     length: 255,
     nullable: false,
   })
-  @Exclude() // Exclude from serialization
-  passwordHash: string;
-
-  @Column({
-    name: 'display_name',
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-  })
-  displayName: string;
+  @Exclude()
+  password: string;
 
   @Column({
     name: 'wins',
