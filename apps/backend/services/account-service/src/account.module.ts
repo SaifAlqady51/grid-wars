@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountController } from './app.controller';
-import { AccountService } from './app.service';
+import { JwtModule } from '@nestjs/jwt';
 import { AccountValidatorService } from './validation/account-validator';
 import { PasswordService } from './validation/password-validator';
 import { Account } from './entity/account.entity';
+import { AccountController } from './controllers/account.controller';
+import { AccountService } from './services/account.service';
+import { JwtAuthService } from './security/jwt.service';
+import { JwtConfigService } from './security/jwt.config';
+import { JWTAccessTokenStrategy } from './security';
 
 @Module({
   imports: [
@@ -30,8 +34,25 @@ import { Account } from './entity/account.entity';
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([Account]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION', '7d'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AccountController],
-  providers: [AccountService, AccountValidatorService, PasswordService],
+  providers: [
+    AccountService,
+    AccountValidatorService,
+    PasswordService,
+    JwtAuthService,
+    JWTAccessTokenStrategy,
+  ],
+  exports: [JwtAuthService, JwtConfigService],
 })
 export class AppModule { }
