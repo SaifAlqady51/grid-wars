@@ -1,4 +1,3 @@
-export { JwtModule } from '@nestjs/jwt';
 export * from './jwt.service';
 export * from './jwt.types';
 export * from './jwt.guard';

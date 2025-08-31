@@ -1,10 +1,8 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
-
-export const JWTAccessTokenGuard = AuthGuard('jwt');
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 export const UseAuth = applyDecorators(
   ApiBearerAuth('access-token'),
-  UseGuards(JWTAccessTokenGuard),
+  UseGuards(JwtAuthGuard),
 );
