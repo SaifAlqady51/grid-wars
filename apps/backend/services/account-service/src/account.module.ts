@@ -2,14 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport'; // Add this import
 import { AccountValidatorService } from './validation/account-validator';
-import { PasswordService } from './validation/password-validator';
-import { Account } from './entity/account.entity';
-import { AccountController } from './controllers/account.controller';
-import { AccountService } from './services/account.service';
-import { JwtAuthService } from './security/jwt.service';
-import { JwtConfigService } from './security/jwt.config';
-import { JWTAccessTokenStrategy } from './security';
+import { PasswordService } from '@/validation/password-validator';
+import { Account } from '@/entity/account.entity';
+import { JWTAccessTokenStrategy, JwtAuthService } from '@/jwt';
+import { AccountController } from '@/controllers/account.controller';
+import { AccountService } from '@/services/account.service';
+import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -17,6 +17,7 @@ import { JWTAccessTokenStrategy } from './security';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -37,7 +38,6 @@ import { JWTAccessTokenStrategy } from './security';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION', '7d'),
         },
@@ -52,7 +52,8 @@ import { JWTAccessTokenStrategy } from './security';
     PasswordService,
     JwtAuthService,
     JWTAccessTokenStrategy,
+    JwtAuthGuard,
   ],
-  exports: [JwtAuthService, JwtConfigService],
+  exports: [JwtAuthService, JWTAccessTokenStrategy],
 })
-export class AppModule { }
+export class AccountModule { }
