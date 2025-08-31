@@ -4,6 +4,7 @@ import {
   MinLength,
   MaxLength,
   Matches,
+  IsNotEmpty,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -13,6 +14,7 @@ export class RegisterDto {
     description: 'User email address',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
   @ApiProperty({
@@ -26,18 +28,21 @@ export class RegisterDto {
   @Matches(/^[a-zA-Z0-9_]+$/, {
     message: 'Username can only contain letters, numbers, and underscores',
   })
+  @IsNotEmpty({ message: 'Username is required' })
   username: string;
 
   @ApiProperty({
-    example: 'Password123!',
     description:
-      'Password (min 8 chars, at least 1 uppercase, 1 lowercase, 1 number, 1 special char)',
+      'password (min 8 characters, at least 1 letter, 1 number, and 1 special character)',
+    example: 'Password123!',
+    minLength: 8,
   })
-  @IsString({ message: 'Password must be a string' })
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+  @IsString()
+  @MinLength(8)
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]/, {
     message:
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'Password must contain at least 1 letter, 1 number, and 1 special character',
   })
+  @IsNotEmpty({ message: 'Password is required' })
   password: string;
 }

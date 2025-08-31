@@ -20,5 +20,10 @@
   "workspaces": [
     "backend/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/swagger": "^11.2.0",
+    "class-validator": "^0.14.2"
+  }
 }

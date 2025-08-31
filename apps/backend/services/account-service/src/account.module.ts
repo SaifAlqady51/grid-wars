@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountController } from './app.controller';
-import { AccountService } from './app.service';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport'; // Add this import
 import { AccountValidatorService } from './validation/account-validator';
-import { PasswordService } from './validation/password-validator';
-import { Account } from './entity/account.entity';
+import { PasswordService } from '@/validation/password-validator';
+import { Account } from '@/entity/account.entity';
+import { JWTAccessTokenStrategy, JwtAuthService } from '@/jwt';
+import { AccountController } from '@/controllers/account.controller';
+import { AccountService } from '@/services/account.service';
+import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -13,6 +17,7 @@ import { Account } from './entity/account.entity';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -30,8 +35,25 @@ import { Account } from './entity/account.entity';
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([Account]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        signOptions: {
+          expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION', '7d'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AccountController],
-  providers: [AccountService, AccountValidatorService, PasswordService],
+  providers: [
+    AccountService,
+    AccountValidatorService,
+    PasswordService,
+    JwtAuthService,
+    JWTAccessTokenStrategy,
+    JwtAuthGuard,
+  ],
+  exports: [JwtAuthService, JWTAccessTokenStrategy],
 })
-export class AppModule { }
+export class AccountModule { }

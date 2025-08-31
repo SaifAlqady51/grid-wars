@@ -1,0 +1,415 @@
+import {
+  describe,
+  beforeEach,
+  afterEach,
+  it,
+  expect,
+  jest,
+} from '@jest/globals';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AccountService } from './account.service';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { Account } from '@/entity/account.entity';
+import { AccountValidatorService } from '@/validation/account-validator';
+import { PasswordService } from '@/validation/password-validator';
+import { JwtAuthService } from '@/security/jwt.service';
+import { RegisterDto } from '@/dto/account-register.dto';
+import { LoginDto } from '@/dto/account-login.dto';
+
+describe('AccountService', () => {
+  let service: AccountService;
+  let accountRepository: Repository<Account>;
+  let accountValidatorService: AccountValidatorService;
+  let passwordService: PasswordService;
+  let jwtAuthService: JwtAuthService;
+
+  const mockAccount: Partial<Account> = {
+    id: '1',
+    email: 'test@example.com',
+    username: 'testuser',
+    password: 'hashedPassword123',
+    createdAt: new Date(),
+    isActive: true,
+  };
+
+  const mockAccountWithoutPassword = {
+    id: '1',
+    email: 'test@example.com',
+    username: 'testuser',
+    createdAt: mockAccount.createdAt,
+    isActive: true,
+  };
+
+  const mockAccessToken = 'mock-jwt-token';
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AccountService,
+        {
+          provide: getRepositoryToken(Account),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: AccountValidatorService,
+          useValue: {
+            validateEmailUniqueness: jest.fn(),
+            validateEmailExists: jest.fn(),
+          },
+        },
+        {
+          provide: PasswordService,
+          useValue: {
+            hashPassword: jest.fn(),
+            comparePassword: jest.fn(),
+          },
+        },
+        {
+          provide: JwtAuthService,
+          useValue: {
+            generateToken: jest.fn().mockReturnValue(mockAccessToken),
+            verifyToken: jest.fn(),
+            decodeToken: jest.fn(),
+          },
+        },
+        {
+          provide: JwtService,
+          useValue: {
+            signAsync: jest.fn(),
+            verifyAsync: jest.fn(),
+            decode: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<AccountService>(AccountService);
+    accountRepository = module.get<Repository<Account>>(
+      getRepositoryToken(Account),
+    );
+    accountValidatorService = module.get<AccountValidatorService>(
+      AccountValidatorService,
+    );
+    passwordService = module.get<PasswordService>(PasswordService);
+    jwtAuthService = module.get<JwtAuthService>(JwtAuthService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('register', () => {
+    const registerDto: RegisterDto = {
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'password123',
+    };
+
+    it('should successfully register a new account with JWT token', async () => {
+      jest
+        .spyOn(accountValidatorService, 'validateEmailUniqueness')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(passwordService, 'hashPassword')
+        .mockResolvedValue('hashedPassword123');
+      jest
+        .spyOn(accountRepository, 'create')
+        .mockReturnValue(mockAccount as Account);
+      jest
+        .spyOn(accountRepository, 'save')
+        .mockResolvedValue(mockAccount as Account);
+
+      // Mock is already set up in the provider, but we can spy on it
+      const generateTokenSpy = jest.spyOn(jwtAuthService, 'generateToken');
+
+      // Act
+      const result = await service.register(registerDto);
+
+      // Assert
+      expect(
+        accountValidatorService.validateEmailUniqueness,
+      ).toHaveBeenCalledWith(registerDto.email);
+      expect(passwordService.hashPassword).toHaveBeenCalledWith(
+        registerDto.password,
+      );
+      expect(accountRepository.create).toHaveBeenCalledWith({
+        email: registerDto.email,
+        username: registerDto.username,
+        password: 'hashedPassword123',
+        createdAt: expect.any(Date),
+        isActive: true,
+      });
+      expect(accountRepository.save).toHaveBeenCalledWith(
+        mockAccount as Account,
+      );
+      expect(generateTokenSpy).toHaveBeenCalledWith({
+        id: mockAccount.id!,
+        email: mockAccount.email!,
+      });
+      expect(result).toEqual({
+        user: mockAccountWithoutPassword,
+        token: mockAccessToken,
+      });
+    });
+
+    it('should throw ConflictException when email is not unique', async () => {
+      // Arrange
+      const conflictError = new ConflictException('Email already exists');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailUniqueness')
+        .mockRejectedValue(conflictError);
+
+      // Act & Assert
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(
+        accountValidatorService.validateEmailUniqueness,
+      ).toHaveBeenCalledWith(registerDto.email);
+      expect(passwordService.hashPassword).not.toHaveBeenCalled();
+      expect(accountRepository.create).not.toHaveBeenCalled();
+      expect(accountRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should handle password hashing errors', async () => {
+      // Arrange
+      const hashingError = new Error('Hashing failed');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailUniqueness')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(passwordService, 'hashPassword')
+        .mockRejectedValue(hashingError);
+
+      // Act & Assert
+      await expect(service.register(registerDto)).rejects.toThrow(
+        'Hashing failed',
+      );
+      expect(
+        accountValidatorService.validateEmailUniqueness,
+      ).toHaveBeenCalled();
+      expect(passwordService.hashPassword).toHaveBeenCalled();
+      expect(accountRepository.create).not.toHaveBeenCalled();
+      expect(accountRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should handle database save errors', async () => {
+      // Arrange
+      const saveError = new Error('Database save failed');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailUniqueness')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(passwordService, 'hashPassword')
+        .mockResolvedValue('hashedPassword123');
+      jest
+        .spyOn(accountRepository, 'create')
+        .mockReturnValue(mockAccount as Account);
+      jest.spyOn(accountRepository, 'save').mockRejectedValue(saveError);
+
+      // Act & Assert
+      await expect(service.register(registerDto)).rejects.toThrow(
+        'Database save failed',
+      );
+      expect(
+        accountValidatorService.validateEmailUniqueness,
+      ).toHaveBeenCalled();
+      expect(passwordService.hashPassword).toHaveBeenCalled();
+      expect(accountRepository.create).toHaveBeenCalled();
+      expect(accountRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('login', () => {
+    const loginDto: LoginDto = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+
+    it('should successfully login with valid credentials and return JWT token', async () => {
+      // Arrange
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockResolvedValue(undefined);
+
+      // Spy on the already mocked method
+      const generateTokenSpy = jest.spyOn(jwtAuthService, 'generateToken');
+
+      // Act
+      const result = await service.login(loginDto);
+
+      // Assert
+      expect(accountValidatorService.validateEmailExists).toHaveBeenCalledWith(
+        loginDto.email,
+      );
+      expect(passwordService.comparePassword).toHaveBeenCalledWith(
+        loginDto.password,
+        mockAccount.password!,
+      );
+      expect(generateTokenSpy).toHaveBeenCalledWith({
+        id: mockAccount.id!,
+        email: mockAccount.email!,
+      });
+      expect(result).toEqual({
+        user: mockAccountWithoutPassword,
+        token: mockAccessToken,
+      });
+    });
+
+    it('should throw UnauthorizedException when email does not exist', async () => {
+      // Arrange
+      const notFoundError = new UnauthorizedException('Invalid credentials');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockRejectedValue(notFoundError);
+
+      // Act & Assert
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(accountValidatorService.validateEmailExists).toHaveBeenCalledWith(
+        loginDto.email,
+      );
+      expect(passwordService.comparePassword).not.toHaveBeenCalled();
+      expect(jwtAuthService.generateToken).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException when password is incorrect', async () => {
+      // Arrange
+      const passwordError = new UnauthorizedException('Incorrect password');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockRejectedValue(passwordError);
+
+      // Act & Assert
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(accountValidatorService.validateEmailExists).toHaveBeenCalledWith(
+        loginDto.email,
+      );
+      expect(passwordService.comparePassword).toHaveBeenCalledWith(
+        loginDto.password,
+        mockAccount.password!,
+      );
+      expect(jwtAuthService.generateToken).not.toHaveBeenCalled();
+    });
+
+    it('should test JWT token generation with correct payload', async () => {
+      // Arrange
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockResolvedValue(undefined);
+      const generateTokenSpy = jest.spyOn(jwtAuthService, 'generateToken');
+
+      // Act
+      await service.login(loginDto);
+
+      // Assert
+      expect(generateTokenSpy).toHaveBeenCalledWith({
+        id: mockAccount.id!,
+        email: mockAccount.email!,
+      });
+    });
+
+    it('should return account without password field and with access token', async () => {
+      // Arrange
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(jwtAuthService, 'generateToken')
+        .mockResolvedValue(mockAccessToken);
+
+      // Act
+      const result = await service.login(loginDto);
+
+      // Assert
+      expect(result.user).not.toHaveProperty('password');
+      expect(result).toHaveProperty('token', mockAccessToken);
+      expect(result.user).toEqual(
+        expect.objectContaining({
+          id: mockAccount.id,
+          email: mockAccount.email,
+          username: mockAccount.username,
+          createdAt: mockAccount.createdAt,
+          isActive: mockAccount.isActive,
+        }),
+      );
+    });
+  });
+
+  describe('JWT token generation', () => {
+    const loginDto: LoginDto = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+
+    it('should generate JWT token with correct payload structure', async () => {
+      // Arrange
+      const generateTokenSpy = jest.spyOn(jwtAuthService, 'generateToken');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockResolvedValue(undefined);
+
+      // Act
+      await service.login(loginDto);
+
+      // Assert
+      expect(generateTokenSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: expect.any(String),
+          email: expect.any(String),
+        }),
+      );
+    });
+
+    it('should include correct user information in JWT payload', async () => {
+      // Arrange
+      const generateTokenSpy = jest.spyOn(jwtAuthService, 'generateToken');
+      jest
+        .spyOn(accountValidatorService, 'validateEmailExists')
+        .mockResolvedValue(mockAccount as Account);
+      jest
+        .spyOn(passwordService, 'comparePassword')
+        .mockResolvedValue(undefined);
+
+      // Act
+      await service.login(loginDto);
+
+      // Assert
+      expect(generateTokenSpy).toHaveBeenCalledWith({
+        id: mockAccount.id!,
+        email: mockAccount.email!,
+      });
+    });
+  });
+});

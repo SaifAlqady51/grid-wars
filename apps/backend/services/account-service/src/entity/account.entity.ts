@@ -4,8 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  BeforeInsert,
-  BeforeUpdate,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -14,12 +12,7 @@ export class Account {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    name: 'username',
-    type: 'varchar',
-    length: 50,
-    nullable: false,
-  })
+  @Column({ name: 'username', type: 'varchar', length: 50, nullable: false })
   username: string;
 
   @Column({
@@ -40,25 +33,13 @@ export class Account {
   @Exclude()
   password: string;
 
-  @Column({
-    name: 'wins',
-    type: 'int',
-    default: 0,
-  })
+  @Column({ name: 'wins', type: 'int', default: 0 })
   wins: number;
 
-  @Column({
-    name: 'losses',
-    type: 'int',
-    default: 0,
-  })
+  @Column({ name: 'losses', type: 'int', default: 0 })
   losses: number;
 
-  @Column({
-    name: 'draws',
-    type: 'int',
-    default: 0,
-  })
+  @Column({ name: 'draws', type: 'int', default: 0 })
   draws: number;
 
   @CreateDateColumn({
@@ -76,57 +57,9 @@ export class Account {
   })
   updatedAt: Date;
 
-  @Column({
-    name: 'is_active',
-    type: 'boolean',
-    default: true,
-  })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({
-    name: 'streak_days',
-    type: 'int',
-    default: 0,
-  })
+  @Column({ name: 'streak_days', type: 'int', default: 0 })
   streakDays: number;
-
-  // Virtual property for total games
-  get totalGames(): number {
-    return this.wins + this.losses + this.draws;
-  }
-
-  // Virtual property for win rate
-  get winRate(): number {
-    if (this.totalGames === 0) return 0;
-    return (this.wins / this.totalGames) * 100;
-  }
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  updateTimestamps(): void {
-    this.updatedAt = new Date();
-  }
-
-  // Helper method to update stats
-  updateStats(result: 'win' | 'loss' | 'draw'): void {
-    switch (result) {
-      case 'win':
-        this.wins += 1;
-        break;
-      case 'loss':
-        this.losses += 1;
-        break;
-      case 'draw':
-        this.draws += 1;
-        break;
-    }
-  }
-
-  // Helper method to reset stats
-  resetStats(): void {
-    this.wins = 0;
-    this.losses = 0;
-    this.draws = 0;
-    this.streakDays = 0;
-  }
 }
