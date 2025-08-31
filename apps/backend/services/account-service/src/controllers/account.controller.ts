@@ -2,12 +2,20 @@ import { AccountAuthResponse } from '@/dto/account-auth-response.dto';
 import { LoginDto } from '@/dto/account-login.dto';
 import { RegisterDto } from '@/dto/account-register.dto';
 import { ApiResponseDto } from '@/dto/api-response';
+import { UpdatePasswordDto } from '@/dto/update-password.dto';
+import { UpdateUsernameDto } from '@/dto/update-username.dto';
 import { Account } from '@/entity/account.entity';
-import { JwtPayload } from '@/security/jwt.decorator';
-import { UseAuth } from '@/security/jwt.guard';
-import { type UserPayload } from '@/security/jwt.types';
+import { JwtPayload, UseAuth, type UserPayload } from '@/jwt';
 import { AccountService } from '@/services/account.service';
-import { Controller, Post, Body, Req, HttpStatus, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  HttpStatus,
+  Get,
+  Patch,
+} from '@nestjs/common';
 
 @Controller('accounts')
 export class AccountController {
@@ -54,6 +62,43 @@ export class AccountController {
     return new ApiResponseDto<Omit<Account, 'password'>>({
       data: profile,
       message: 'Profile retrieved successfully',
+      error: false,
+      timestamp: new Date().toISOString(),
+      status: HttpStatus.OK,
+    });
+  }
+
+  @Patch('update-username')
+  @UseAuth
+  async updateUsername(
+    @Body() username: UpdateUsernameDto,
+    @JwtPayload() { sub }: UserPayload,
+  ): Promise<ApiResponseDto<Omit<Account, 'password'>>> {
+    const updatedAccount = await this.accountService.updateUsername(
+      sub,
+      username,
+    );
+    return new ApiResponseDto<Omit<Account, 'password'>>({
+      data: updatedAccount,
+      message: 'Username updated successfully',
+      error: false,
+      timestamp: new Date().toISOString(),
+      status: HttpStatus.OK,
+    });
+  }
+
+  @Patch('update-password')
+  @UseAuth
+  async updatePassword(
+    @Body() password: UpdatePasswordDto,
+    @JwtPayload() { sub }: UserPayload,
+  ): Promise<ApiResponseDto<null>> {
+    const updatePasswordMessage = await this.accountService.updatePassword(
+      sub,
+      password,
+    );
+    return new ApiResponseDto<null>({
+      message: updatePasswordMessage.message,
       error: false,
       timestamp: new Date().toISOString(),
       status: HttpStatus.OK,
