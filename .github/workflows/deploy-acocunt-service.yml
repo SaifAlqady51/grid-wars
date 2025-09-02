@@ -39,7 +39,7 @@ jobs:
           echo "EC2_SSH_KEY exists: ${{ secrets.EC2_SSH_KEY != '' }}"
           echo "EC2_HOST value: '${{ secrets.EC2_HOST }}'"
           echo "EC2_USERNAME value: '${{ secrets.EC2_USERNAME }}'"
-          echo "EC2_SSH_KEY length: ${{ length(secrets.EC2_SSH_KEY) }}"
+          echo "EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}"
 
       - name: Validate required secrets
         run: |
