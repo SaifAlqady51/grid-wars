@@ -29,9 +29,9 @@ jobs:
         working-directory: ./apps/backend/services/account-service
         run: npm ci
 
-      - name: Build application with package files
+      - name: Build application with package files (skip env copy)
         working-directory: ./apps/backend/services/account-service
-        run: npm run build-with-package
+        run: npm run build && npm run copy-package
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -53,8 +53,8 @@ jobs:
             # Install/update dependencies
             npm ci
 
-            # Build the application with package files
-            npm run build-with-package
+            # Build the application with package files (skip env copy for now)
+            npm run build && npm run copy-package
 
             # Install PM2 locally if not exists
             if ! command -v npx pm2 &> /dev/null; then
@@ -65,14 +65,21 @@ jobs:
             npx pm2 stop grid-wars-account-service || true
             npx pm2 delete grid-wars-account-service || true
 
-            # Create/update environment file
-            echo "NODE_ENV=production" > .env.production
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.production
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production
-            # Add other environment variables as needed
+            # Create/update environment file in dist folder
+            echo "DB_HOST=${{ secrets.DB_HOST }}" > dist/.env
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> dist/.env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> dist/.env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> dist/.env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> dist/.env
+            echo "DB_SYNCHRONIZE=false" >> dist/.env
+            echo "NODE_ENV=production" >> dist/.env
+            echo "PORT=3001" >> dist/.env
+            echo "ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}" >> dist/.env
+            echo "ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}" >> dist/.env
+            echo "ACCESS_TOKEN_EXPIRATION=7d" >> dist/.env
 
             # Start the application with PM2 (from dist folder)
-            npx pm2 start dist/main.js --name "grid-wars-account-service" --env production
+            npx pm2 start dist/main.js --name "grid-wars-account-service"
 
             # Save PM2 configuration
             npx pm2 save
