@@ -1,5 +1,4 @@
 name: Deploy Account Service to EC2
-
 on:
   push:
     branches: ["*"]
@@ -13,7 +12,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,13 +31,51 @@ jobs:
         working-directory: ./apps/backend/services/account-service
         run: npm run build && npm run copy-package
 
+      - name: Debug - Check secrets availability
+        run: |
+          echo "Checking secret availability..."
+          echo "EC2_HOST exists: ${{ secrets.EC2_HOST != '' }}"
+          echo "EC2_USERNAME exists: ${{ secrets.EC2_USERNAME != '' }}"
+          echo "EC2_SSH_KEY exists: ${{ secrets.EC2_SSH_KEY != '' }}"
+          echo "EC2_HOST value: '${{ secrets.EC2_HOST }}'"
+          echo "EC2_USERNAME value: '${{ secrets.EC2_USERNAME }}'"
+          echo "EC2_SSH_KEY length: ${{ length(secrets.EC2_SSH_KEY) }}"
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "$EC2_HOST" ]; then
+            echo "Error: EC2_HOST secret is empty or not accessible"
+            echo "Available environment variables:"
+            env | grep -E "(GITHUB|RUNNER)" | head -10
+            exit 1
+          fi
+          if [ -z "$EC2_USERNAME" ]; then
+            echo "Error: EC2_USERNAME secret is empty or not accessible"
+            exit 1
+          fi
+          if [ -z "$EC2_SSH_KEY" ]; then
+            echo "Error: EC2_SSH_KEY secret is empty or not accessible"
+            exit 1
+          fi
+          echo "All required secrets are accessible"
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USERNAME: ${{ secrets.EC2_USERNAME }}
+          KEY: ${{ secrets.EC2_SSH_KEY }}
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ env.HOST }}
+          username: ${{ env.USERNAME }}
+          key: ${{ env.KEY }}
           port: 22
+          timeout: 60s
+          command_timeout: 10m
           script: |
             # Navigate to app directory
             cd ~/grid-wars-account-service
@@ -93,5 +129,5 @@ jobs:
             # Wait a moment for the app to start
             sleep 5
 
-            # Health check (adjust URL/port as needed)
-            curl -f http://localhost:3000/health || echo "Health check failed, but deployment completed"
+            # Health check (port should match your app's port - you have PORT=3001 but checking 3000)
+            curl -f http://localhost:3001/health || echo "Health check failed, but deployment completed"
