@@ -12,7 +12,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: secrets # Add this line to access environment secrets
+    environment: secrets
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: "apps/backend/services/account-service/package-lock.json"
 
@@ -72,97 +72,52 @@ jobs:
             echo "Current directory: $(pwd)"
             echo "User: $(whoami)"
 
-            # Navigate to app directory (create if doesn't exist)
-            mkdir -p ~/grid-wars-account-service
+            # Navigate to app directory
             cd ~/grid-wars-account-service
 
-            # Initialize git repository if it doesn't exist
-            if [ ! -d ".git" ]; then
-              echo "Initializing git repository..."
-              git init
-              git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-            fi
-
-            # Pull latest code (or clone if first time)
-            if [ -d ".git" ]; then
-              git fetch origin main
-              git reset --hard origin/main
+            # Check if we're already in the right place (compiled app directory)
+            if [ -f "main.js" ] && [ -f "package.json" ]; then
+              echo "Found compiled application in current directory"
+              
+              # Stop existing PM2 process (if running)
+              npx pm2 stop grid-wars-account-service || true
+              npx pm2 delete grid-wars-account-service || true
+              
+              # Update environment file
+              echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
+              echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+              echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+              echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+              echo "DB_SYNCHRONIZE=false" >> .env
+              echo "NODE_ENV=production" >> .env
+              echo "PORT=3001" >> .env
+              echo "ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}" >> .env
+              echo "ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}" >> .env
+              echo "ACCESS_TOKEN_EXPIRATION=7d" >> .env
+              
+              # Install PM2 if not exists
+              if ! command -v pm2 &> /dev/null && ! command -v npx pm2 &> /dev/null; then
+                npm install pm2
+              fi
+              
+              # Start the application with PM2
+              npx pm2 start main.js --name "grid-wars-account-service"
+              
+              # Save PM2 configuration
+              npx pm2 save
+              
+              # Setup PM2 to start on system boot
+              npx pm2 startup || true
+              
             else
-              echo "Cloning repository..."
-              git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git .
-            fi
-
-            # Check if the service directory exists
-            if [ ! -d "apps/backend/services/account-service" ]; then
-              echo "Error: Service directory not found!"
-              echo "Available directories:"
-              find . -name "account-service" -type d
-              echo "Current structure:"
+              echo "Application files not found in expected location"
+              echo "Current directory contents:"
               ls -la
+              echo "Looking for application files..."
+              find . -name "main.js" -type f
               exit 1
             fi
-
-            # Navigate to the specific service
-            cd apps/backend/services/account-service
-
-            # Check for required files
-            if [ ! -f "package.json" ]; then
-              echo "Error: package.json not found in $(pwd)"
-              exit 1
-            fi
-
-            if [ ! -f "tsconfig.json" ]; then
-              echo "Error: tsconfig.json not found in $(pwd)"
-              echo "Available files:"
-              ls -la
-              exit 1
-            fi
-
-            # Install/update dependencies
-            npm ci
-
-            # Build the application with package files
-            npm run build && npm run copy-package
-
-            # Verify build output
-            if [ ! -f "dist/main.js" ]; then
-              echo "Error: Build failed - dist/main.js not found"
-              echo "Contents of dist directory:"
-              ls -la dist/ || echo "dist directory doesn't exist"
-              exit 1
-            fi
-
-            # Install PM2 locally if not exists
-            if ! command -v npx pm2 &> /dev/null; then
-              npm install --save-dev pm2
-            fi
-
-            # Stop existing PM2 process (if running)
-            npx pm2 stop grid-wars-account-service || true
-            npx pm2 delete grid-wars-account-service || true
-
-            # Create dist directory if it doesn't exist and add environment file
-            mkdir -p dist
-            echo "DB_HOST=${{ secrets.DB_HOST }}" > dist/.env
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> dist/.env
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> dist/.env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> dist/.env
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> dist/.env
-            echo "DB_SYNCHRONIZE=false" >> dist/.env
-            echo "NODE_ENV=production" >> dist/.env
-            echo "PORT=3001" >> dist/.env
-            echo "ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}" >> dist/.env
-            echo "ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}" >> dist/.env
-            echo "ACCESS_TOKEN_EXPIRATION=7d" >> dist/.env
-
-            # Start the application with PM2 (from dist folder)
-            npx pm2 start dist/main.js --name "grid-wars-account-service"
-
-            # Save PM2 configuration
-            npx pm2 save
-
-            # Setup PM2 to start on system boot (run once)
-            npx pm2 startup || true
 
             # Show PM2 status
             npx pm2 list
