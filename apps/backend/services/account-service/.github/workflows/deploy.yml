@@ -1,0 +1,80 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application with package files
+        run: npm run build-with-package
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Navigate to app directory
+            cd ~/grid-wars-account-service
+
+            # Pull latest code
+            git pull origin main
+
+            # Install/update dependencies
+            npm ci
+
+            # Build the application with package files
+            npm run build-with-package
+
+            # Install PM2 locally if not exists
+            if ! command -v npx pm2 &> /dev/null; then
+              npm install --save-dev pm2
+            fi
+
+            # Stop existing PM2 process (if running)
+            npx pm2 stop grid-wars-api || true
+            npx pm2 delete grid-wars-api || true
+
+            # Create/update environment file
+            echo "NODE_ENV=production" > .env.production
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.production
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production
+            # Add other environment variables as needed
+
+            # Start the application with PM2 (from dist folder)
+            npx pm2 start dist/main.js --name "grid-wars-api" --env production
+
+            # Save PM2 configuration
+            npx pm2 save
+
+            # Setup PM2 to start on system boot (run once)
+            npx pm2 startup || true
+
+            # Show PM2 status
+            npx pm2 list
+
+            # Wait a moment for the app to start
+            sleep 5
+
+            # Health check (adjust URL/port as needed)
+            curl -f http://localhost:3000/health || echo "Health check failed, but deployment completed"
