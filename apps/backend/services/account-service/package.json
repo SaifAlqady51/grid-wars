@@ -22,7 +22,10 @@
     "db:down": "docker compose down",
     "db:restart": "docker compose restart",
     "db:logs": "docker compose logs -f",
-    "db:shell": "docker exec -it account_service_db psql -U postgres -d account_database"
+    "db:shell": "docker exec -it account_service_db psql -U postgres -d account_database",
+    "copy-env": "cp .env dist/.env",
+    "copy-package": "cp package.json dist/package.json",
+    "build-with-package": "npm run build && npm run copy-package && npm run copy-env"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
