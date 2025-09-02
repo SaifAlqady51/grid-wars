@@ -1,10 +1,14 @@
-name: Deploy to EC2
+name: Deploy Account Service to EC2
 
 on:
   push:
-    branches: ['*']
+    branches: ["*"]
+    paths:
+      - "apps/backend/services/account-service/**"
   pull_request:
-    branches: ['*']
+    branches: ["*"]
+    paths:
+      - "apps/backend/services/account-service/**"
 
 jobs:
   deploy:
@@ -17,13 +21,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "apps/backend/services/account-service/package-lock.json"
 
       - name: Install dependencies
+        working-directory: ./apps/backend/services/account-service
         run: npm ci
 
       - name: Build application with package files
+        working-directory: ./apps/backend/services/account-service
         run: npm run build-with-package
 
       - name: Deploy to EC2
@@ -40,6 +47,9 @@ jobs:
             # Pull latest code
             git pull origin main
 
+            # Navigate to the specific service
+            cd apps/backend/services/account-service
+
             # Install/update dependencies
             npm ci
 
@@ -52,8 +62,8 @@ jobs:
             fi
 
             # Stop existing PM2 process (if running)
-            npx pm2 stop grid-wars-api || true
-            npx pm2 delete grid-wars-api || true
+            npx pm2 stop grid-wars-account-service || true
+            npx pm2 delete grid-wars-account-service || true
 
             # Create/update environment file
             echo "NODE_ENV=production" > .env.production
@@ -62,7 +72,7 @@ jobs:
             # Add other environment variables as needed
 
             # Start the application with PM2 (from dist folder)
-            npx pm2 start dist/main.js --name "grid-wars-api" --env production
+            npx pm2 start dist/main.js --name "grid-wars-account-service" --env production
 
             # Save PM2 configuration
             npx pm2 save
