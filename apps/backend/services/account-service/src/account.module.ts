@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport'; // Add this import
+import { PassportModule } from '@nestjs/passport';
 import { AccountValidatorService } from './validation/account-validator';
 import { PasswordService } from '@/validation/password-validator';
 import { Account } from '@/entity/account.entity';
