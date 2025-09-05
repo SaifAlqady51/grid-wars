@@ -164,7 +164,6 @@ export class AccountService {
       updatePasswordDto.newPassword,
     );
 
-    // Update password
     account.password = hashedPassword;
     account.updatedAt = new Date();
 
