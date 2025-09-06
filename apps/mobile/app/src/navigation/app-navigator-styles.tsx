@@ -7,6 +7,7 @@ export const useNavigationStyles = () => {
   return StyleSheet.create({
     tabBar: {
       backgroundColor: theme.colors.navigation,
+      position: "absolute",
       borderWidth: 0,
       borderTopWidth: 0,
       height: 60,
@@ -14,6 +15,7 @@ export const useNavigationStyles = () => {
       paddingTop: theme.spacing.sm,
       borderRadius: 20,
       marginBottom: 28,
+      marginHorizontal: 16,
     },
     tabLabel: {
       fontSize: theme.typography.small,
