@@ -2,16 +2,15 @@ import React from "react";
 import { View, Text } from "react-native";
 import { ScreenComponentProps } from "@/types";
 import { Button, Title } from "@/ui";
-import { containerStyles } from "@/styles";
+import { ContainerStyles } from "@/styles";
 
 export const HomeScreen: React.FC<ScreenComponentProps> = ({ navigation }) => {
+  const styles = ContainerStyles();
   return (
-    <View style={containerStyles.screen}>
-      <View style={{ backgroundColor: "grey" }}>Daily Challenge</View>
+    <View style={styles.screen}>
+      <Text style={{ backgroundColor: "grey" }}>Daily Challenge</Text>
       <Title>Grid Wars</Title>
-      <Text style={containerStyles.description}>
-        Welcome to your home base!
-      </Text>
+      <Text style={styles.description}>Welcome to your home base!</Text>
       <Button
         onPress={() => navigation.navigate("Battle")}
         style={{ width: "100%" }}
