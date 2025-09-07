@@ -8,14 +8,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export const BattleScreen: React.FC<ScreenComponentProps> = ({
   navigation,
 }) => {
-  const styles = ContainerStyles();
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: "#your-background-color" }}
     >
-      <View style={styles.screen}>
+      <View style={ContainerStyles.screen}>
         <Title>Battle Screen</Title>
-        <Text style={styles.description}>Ready for some action?</Text>
+        <Text style={ContainerStyles.description}>Ready for some action?</Text>
         <Button
           title="Go to Home"
           onPress={() => navigation.navigate("Home")}
