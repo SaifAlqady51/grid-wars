@@ -9,10 +9,10 @@ import {
   Image,
 } from "react-native";
 import { styles } from "./introduction.styles";
-import { useTheme } from "../../context";
 import Welcome from "@/assets/images/welcom.png";
 import Compete from "@/assets/images/compete.png";
 import Scoreboard from "@/assets/images/scoreboard.png";
+import { globalStyles } from "../../styles";
 
 interface SlideItem {
   id: string;
@@ -55,12 +55,13 @@ export const IntroductionSlider: React.FC<IntroSliderProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const theme = useTheme();
-
-  const RenderSlide = ({ item, index }: { item: SlideItem; index: number }) => {
+  const RenderSlide = ({ item }: { item: SlideItem; index: number }) => {
     return (
       <View
-        style={[styles.slide, { backgroundColor: theme.colors.background }]}
+        style={[
+          styles.slide,
+          { backgroundColor: globalStyles.colors.background },
+        ]}
       >
         <View style={styles.content}>
           <Image
@@ -121,7 +122,7 @@ export const IntroductionSlider: React.FC<IntroSliderProps> = ({
     <View style={styles.container}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={theme.colors.background}
+        backgroundColor={globalStyles.colors.background}
       />
 
       {/* Skip Button */}
