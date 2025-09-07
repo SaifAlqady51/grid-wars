@@ -1,13 +1,11 @@
-import { useTheme } from "@/context";
 import { TextProps, Text } from "react-native";
+import { globalStyles } from "../../styles";
 
 interface TitleProps extends TextProps {
   children: React.ReactNode;
 }
 
 export const Title: React.FC<TitleProps> = ({ children, style, ...props }) => {
-  const theme = useTheme();
-
   return (
     <Text
       style={[
@@ -15,7 +13,7 @@ export const Title: React.FC<TitleProps> = ({ children, style, ...props }) => {
           fontSize: 28,
           fontWeight: "bold",
           marginBottom: 12,
-          color: theme.colors.text,
+          color: globalStyles.colors.text,
         },
         style,
       ]}

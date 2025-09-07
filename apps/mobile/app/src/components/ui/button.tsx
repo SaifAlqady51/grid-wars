@@ -1,4 +1,3 @@
-import { useTheme } from "@/context";
 import React from "react";
 import {
   TouchableOpacity,
@@ -6,6 +5,7 @@ import {
   TextStyle,
   ActivityIndicator,
 } from "react-native";
+import { globalStyles } from "../../styles";
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -28,8 +28,6 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   style,
 }) => {
-  const theme = useTheme();
-
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       borderRadius: 8,
@@ -41,18 +39,18 @@ export const Button: React.FC<ButtonProps> = ({
     // Size styles
     const sizeStyles: Record<string, ViewStyle> = {
       small: {
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.sm,
+        paddingHorizontal: globalStyles.spacing.md,
+        paddingVertical: globalStyles.spacing.sm,
         minHeight: 32,
       },
       medium: {
-        paddingHorizontal: theme.spacing.lg,
-        paddingVertical: theme.spacing.md,
+        paddingHorizontal: globalStyles.spacing.lg,
+        paddingVertical: globalStyles.spacing.md,
         minHeight: 44,
       },
       large: {
-        paddingHorizontal: theme.spacing.xl,
-        paddingVertical: theme.spacing.lg,
+        paddingHorizontal: globalStyles.spacing.xl,
+        paddingVertical: globalStyles.spacing.lg,
         minHeight: 52,
       },
     };
@@ -61,18 +59,20 @@ export const Button: React.FC<ButtonProps> = ({
     const variantStyles: Record<string, ViewStyle> = {
       primary: {
         backgroundColor: disabled
-          ? theme.colors.inactive
-          : theme.colors.primary,
+          ? globalStyles.colors.inactive
+          : globalStyles.colors.primary,
       },
       secondary: {
         backgroundColor: disabled
-          ? theme.colors.inactive
-          : theme.colors.secondary,
+          ? globalStyles.colors.inactive
+          : globalStyles.colors.secondary,
       },
       outline: {
         backgroundColor: "transparent",
         borderWidth: 2,
-        borderColor: disabled ? theme.colors.inactive : theme.colors.primary,
+        borderColor: disabled
+          ? globalStyles.colors.inactive
+          : globalStyles.colors.primary,
       },
       ghost: {
         backgroundColor: "transparent",
@@ -96,19 +96,25 @@ export const Button: React.FC<ButtonProps> = ({
 
     // Size styles
     const sizeStyles: Record<string, TextStyle> = {
-      small: { fontSize: theme.typography.small },
-      medium: { fontSize: theme.typography.medium },
-      large: { fontSize: theme.typography.large },
+      small: { fontSize: globalStyles.fonts.sm },
+      medium: { fontSize: globalStyles.fonts.md },
+      large: { fontSize: globalStyles.fonts.lg },
     };
 
     // Variant styles
     const variantStyles: Record<string, TextStyle> = {
-      primary: { color: theme.colors.surface },
-      secondary: { color: theme.colors.surface },
+      primary: { color: globalStyles.colors.surface },
+      secondary: { color: globalStyles.colors.surface },
       outline: {
-        color: disabled ? theme.colors.inactive : theme.colors.primary,
+        color: disabled
+          ? globalStyles.colors.inactive
+          : globalStyles.colors.primary,
       },
-      ghost: { color: disabled ? theme.colors.inactive : theme.colors.primary },
+      ghost: {
+        color: disabled
+          ? globalStyles.colors.inactive
+          : globalStyles.colors.primary,
+      },
     };
 
     return {
@@ -125,8 +131,8 @@ export const Button: React.FC<ButtonProps> = ({
           size="small"
           color={
             variant === "primary" || variant === "secondary"
-              ? theme.colors.surface
-              : theme.colors.primary
+              ? globalStyles.colors.surface
+              : globalStyles.colors.primary
           }
         />
       );
