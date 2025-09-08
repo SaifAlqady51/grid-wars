@@ -12,17 +12,9 @@ import { FormInput, Button } from "@/app/src/components/ui/";
 import { PasswordStrength } from "./password-strength";
 
 interface SignUpFormProps {
-  onSubmit: (
-    data: Omit<RegisterFormData, "confirmPassword"> & { username: string },
-  ) => Promise<void>;
+  onSubmit: (data: Omit<RegisterFormData, "confirmPassword">) => Promise<void>;
   loading: boolean;
 }
-
-// Helper function to extract username from email
-const getUsernameFromEmail = (email: string): string => {
-  if (!email || !email.includes("@")) return "";
-  return email.split("@")[0];
-};
 
 export const RegisterForm: React.FC<SignUpFormProps> = ({
   onSubmit,
@@ -40,6 +32,7 @@ export const RegisterForm: React.FC<SignUpFormProps> = ({
       email: "",
       password: "",
       confirmPassword: "",
+      username: "",
     },
   });
 
@@ -47,11 +40,10 @@ export const RegisterForm: React.FC<SignUpFormProps> = ({
 
   // Modified submit handler to include username
   const handleFormSubmit = async (data: RegisterFormData) => {
-    const username = getUsernameFromEmail(data.email);
     await onSubmit({
       email: data.email,
       password: data.password,
-      username,
+      username: data.username,
     });
   };
 
@@ -66,6 +58,15 @@ export const RegisterForm: React.FC<SignUpFormProps> = ({
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
+      />
+
+      <FormInput
+        name="username"
+        control={control}
+        errors={errors}
+        placeholder="Username"
+        autoCapitalize="none"
+        autoComplete="username"
       />
 
       {/* Password Input */}
