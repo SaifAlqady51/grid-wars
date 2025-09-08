@@ -29,6 +29,10 @@ export const RegisterSchema = z
   .object({
     email: emailSchema,
     password: strongPasswordSchema,
+    username: z
+      .string()
+      .min(1, "Username is required")
+      .max(20, "Username is too long"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
