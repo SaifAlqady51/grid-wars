@@ -1,0 +1,32 @@
+{
+  "name": "@grid-wars/types",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "src/**/*"
+  ],
+  "scripts": {
+    "generate-types": "node ./scripts/swagger-generate-types.js",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "swagger-typescript-api": "^13.2.9",
+    "typescript": "^5.9.2"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.1"
+  }
+}
