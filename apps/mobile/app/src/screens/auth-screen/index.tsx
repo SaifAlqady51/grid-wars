@@ -12,6 +12,7 @@ import { styles } from "./components/styles";
 import { RegisterForm } from "./components/register-form";
 import { LoginForm } from "./components/login-form";
 import { LoginFormData, RegisterFormData } from "./schema";
+import { AccountService } from "../../service/account-service";
 
 export const AuthScreen: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
@@ -33,10 +34,16 @@ export const AuthScreen: React.FC = () => {
     }
   };
 
-  const handleSignUp = async (data: RegisterFormData): Promise<void> => {
+  const handleSignUp = async (
+    data: Omit<RegisterFormData, "confirmPassword">,
+  ): Promise<void> => {
     setLoading(true);
     try {
       console.log("Sign up data:", data);
+
+      const accountCreated = await AccountService.getInstance().register({
+        ...data,
+      });
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));

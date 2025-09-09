@@ -1,7 +1,8 @@
+import { IncludeAllModels } from '@/decorators/swagger-decorator';
 import { AccountAuthResponse } from '@/dto/account-auth-response.dto';
 import { LoginDto } from '@/dto/account-login.dto';
 import { RegisterDto } from '@/dto/account-register.dto';
-import { ApiResponseDto } from '@/dto/api-response';
+import { ApiResponseDto } from '@/dto/api-response.dto';
 import { UpdatePasswordDto } from '@/dto/update-password.dto';
 import { UpdateUsernameDto } from '@/dto/update-username.dto';
 import { Account } from '@/entity/account.entity';
@@ -16,12 +17,20 @@ import {
   Get,
   Patch,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('accounts')
+@IncludeAllModels()
 export class AccountController {
   constructor(private readonly accountService: AccountService) { }
 
   @Post('register')
+  @ApiOperation({ summary: 'Register a new account' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Account created successfully',
+    type: ApiResponseDto<AccountAuthResponse>,
+  })
   async register(
     @Body() registerDto: RegisterDto,
     @Req() request: Request,
@@ -37,6 +46,12 @@ export class AccountController {
     });
   }
   @Post('login')
+  @ApiOperation({ summary: 'Login to account' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login successful',
+    type: ApiResponseDto<AccountAuthResponse>,
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Req() request: Request,
@@ -55,6 +70,12 @@ export class AccountController {
 
   @Get('profile')
   @UseAuth
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully',
+    type: ApiResponseDto<Account>,
+  })
   async getProfile(
     @JwtPayload() { sub }: UserPayload,
   ): Promise<ApiResponseDto<Omit<Account, 'password'>>> {
@@ -70,6 +91,12 @@ export class AccountController {
 
   @Patch('update-username')
   @UseAuth
+  @ApiOperation({ summary: 'Update uesrname' })
+  @ApiResponse({
+    status: 200,
+    description: 'Username updated successfully',
+    type: ApiResponseDto<Account>,
+  })
   async updateUsername(
     @Body() username: UpdateUsernameDto,
     @JwtPayload() { sub }: UserPayload,
@@ -89,6 +116,12 @@ export class AccountController {
 
   @Patch('update-password')
   @UseAuth
+  @ApiOperation({ summary: 'Update password' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password updated successfully',
+    type: ApiResponseDto<Account>,
+  })
   async updatePassword(
     @Body() password: UpdatePasswordDto,
     @JwtPayload() { sub }: UserPayload,
