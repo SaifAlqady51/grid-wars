@@ -24,7 +24,7 @@ export class AccountValidatorService {
     }
   }
 
-  async validateEmailExists(email: string): Promise<Partial<Account>> {
+  async validateEmailExists(email: string): Promise<Account> {
     const account = await this.accountRepository.findOne({
       where: { email },
     });
