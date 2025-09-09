@@ -1,39 +1,34 @@
-import { StyleSheet } from "react-native";
-
-export const globalStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
+export const globalStyles = {
+  colors: {
+    primary: "#0077B6",
+    secondary: "#00A682",
+    destructive: "#E45651",
+    background: "#10002B",
+    text: "#E3E3E3",
+    inactive: "gray",
+    border: "#e7e7e7",
+    surface: "#f8f8f8",
+    navigation: "#9D4EDD",
+    success: "#34C759",
+    warning: "#FF9500",
+    textSecondary: "#8E8E93",
+    black: "#000000",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
   },
-  text: {
-    fontSize: 16,
-    lineHeight: 24,
+  fonts: {
+    xs: 10,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    "2xl": 20,
+    "3xl": 24,
+    "4xl": 32,
   },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "600",
-  },
-});
-
-export const colors = {
-  primary: "#007AFF",
-  secondary: "#5856D6",
-  success: "#34C759",
-  danger: "#FF3B30",
-  warning: "#FF9500",
-  background: "#10002B",
-  text: "#000",
-  textSecondary: "#8E8E93",
 };

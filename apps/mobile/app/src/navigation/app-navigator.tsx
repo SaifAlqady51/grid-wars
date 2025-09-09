@@ -2,14 +2,13 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { colors, useNavigationStyles } from "./app-navigator-styles";
-import { useTheme } from "../context/theme-context";
 import { TabParamList } from "../types";
 import { BattleScreen, HomeScreen, PersonalScreen } from "@/screens";
+import { globalStyles } from "../styles";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const AppNavigator: React.FC = () => {
-  const theme = useTheme();
   const navigationStyles = useNavigationStyles();
   return (
     <Tab.Navigator
@@ -31,7 +30,7 @@ const AppNavigator: React.FC = () => {
         tabBarStyle: navigationStyles.tabBar,
         tabBarLabelStyle: navigationStyles.tabLabel,
         headerStyle: navigationStyles.header,
-        headerTintColor: theme.colors.navigation,
+        headerTintColor: globalStyles.colors.navigation,
         headerTitleStyle: navigationStyles.headerTitle,
         headerShown: false,
       })}

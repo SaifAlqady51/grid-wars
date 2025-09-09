@@ -5,11 +5,12 @@ import { Title } from "@/ui";
 import { ContainerStyles } from "@/styles";
 
 export const PersonalScreen: React.FC<ScreenComponentProps> = () => {
-  const styles = ContainerStyles();
   return (
-    <View style={styles.screen}>
+    <View style={ContainerStyles.screen}>
       <Title>Personal Screen</Title>
-      <Text style={styles.description}>Manage your profile and settings</Text>
+      <Text style={ContainerStyles.description}>
+        Manage your profile and settings
+      </Text>
     </View>
   );
 };

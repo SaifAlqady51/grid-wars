@@ -5,12 +5,13 @@ import { Button, Title } from "@/ui";
 import { ContainerStyles } from "@/styles";
 
 export const HomeScreen: React.FC<ScreenComponentProps> = ({ navigation }) => {
-  const styles = ContainerStyles();
   return (
-    <View style={styles.screen}>
+    <View style={ContainerStyles.screen}>
       <Text style={{ backgroundColor: "grey" }}>Daily Challenge</Text>
       <Title>Grid Wars</Title>
-      <Text style={styles.description}>Welcome to your home base!</Text>
+      <Text style={ContainerStyles.description}>
+        Welcome to your home base!
+      </Text>
       <Button
         onPress={() => navigation.navigate("Battle")}
         style={{ width: "100%" }}

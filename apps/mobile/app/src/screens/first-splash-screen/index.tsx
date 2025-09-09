@@ -1,10 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ContainerStyles } from "../../styles";
 import { Image, View } from "react-native";
 import Logo from "@/assets/images/logo.png";
+import { ContainerStyles } from "../../styles/container.styles";
 
 export const FirstSplashScreen = () => {
-  const styles = ContainerStyles();
+  const styles = ContainerStyles;
   return (
     <SafeAreaView style={styles.screen}>
       <View
