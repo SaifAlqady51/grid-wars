@@ -1,17 +1,14 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginFormData, LoginSchema } from "../schema";
 import { FormInput, Button } from "@/app/src/components/ui";
 import { styles } from "./styles";
+import { AccountService } from "@/app/src/service/account-service";
 
-interface SignInFormProps {
-  onSubmit: (data: LoginFormData) => Promise<void>;
-  loading: boolean;
-}
-
-export const LoginForm: React.FC<SignInFormProps> = ({ onSubmit, loading }) => {
+export const LoginForm: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+  const [loading, setLoading] = React.useState<boolean>(false);
   const {
     control,
     handleSubmit,
@@ -24,6 +21,20 @@ export const LoginForm: React.FC<SignInFormProps> = ({ onSubmit, loading }) => {
       password: "",
     },
   });
+
+  const handleLogin = async (data: LoginFormData): Promise<void> => {
+    setLoading(true);
+    try {
+      await AccountService.login(data);
+      Alert.alert("Success", "Signed in successfully!");
+      onFinish();
+    } catch (error: any) {
+      const errorMessage = error.message || "Sign in failed. Please try again.";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.form}>
@@ -51,7 +62,7 @@ export const LoginForm: React.FC<SignInFormProps> = ({ onSubmit, loading }) => {
       {/* Submit Button */}
       <Button
         variant="primary"
-        onPress={handleSubmit(onSubmit)}
+        onPress={handleSubmit(handleLogin)}
         disabled={loading}
       >
         <Text style={styles.primaryButtonText}>
