@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Alert } from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -10,16 +10,12 @@ import {
 import { styles } from "./styles";
 import { FormInput, Button } from "@/app/src/components/ui/";
 import { PasswordStrength } from "./password-strength";
+import { AccountService } from "@/app/src/service/account-service";
 
-interface SignUpFormProps {
-  onSubmit: (data: Omit<RegisterFormData, "confirmPassword">) => Promise<void>;
-  loading: boolean;
-}
-
-export const RegisterForm: React.FC<SignUpFormProps> = ({
-  onSubmit,
-  loading,
+export const RegisterForm: React.FC<{ onFinish: () => void }> = ({
+  onFinish,
 }) => {
+  const [loading, setLoading] = React.useState<boolean>(false);
   const {
     control,
     handleSubmit,
@@ -38,13 +34,23 @@ export const RegisterForm: React.FC<SignUpFormProps> = ({
 
   const watchedPassword = watch("password");
 
-  // Modified submit handler to include username
-  const handleFormSubmit = async (data: RegisterFormData) => {
-    await onSubmit({
-      email: data.email,
-      password: data.password,
-      username: data.username,
-    });
+  const handleRegister = async (
+    data: Omit<RegisterFormData, "confirmPassword">,
+  ): Promise<void> => {
+    setLoading(true);
+    try {
+      await AccountService.register({
+        ...data,
+      });
+      Alert.alert("Success", "Account created successfully!");
+      onFinish();
+    } catch (error: any) {
+      const errorMessage =
+        error.message || "Account creation failed. Please try again.";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,7 +104,7 @@ export const RegisterForm: React.FC<SignUpFormProps> = ({
 
       <Button
         variant="primary"
-        onPress={handleSubmit(handleFormSubmit)}
+        onPress={handleSubmit(handleRegister)}
         disabled={loading}
       >
         <Text style={styles.primaryButtonText}>

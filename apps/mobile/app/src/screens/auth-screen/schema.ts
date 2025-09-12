@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { globalStyles } from "../../styles";
 
 const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])./;
 
 const emailSchema = z
   .string()
@@ -17,7 +19,7 @@ const basicPasswordSchema = z
 
 const strongPasswordSchema = basicPasswordSchema.regex(
   PASSWORD_REGEX,
-  "Password must contain uppercase, lowercase, and number",
+  "Password must contain uppercase, lowercase, number, and special character",
 );
 
 export const LoginSchema = z.object({
@@ -49,18 +51,21 @@ export const getPasswordStrength = (password: string) => {
   if (!password || password.length === 0) return null;
 
   if (password.length < 4) {
-    return { strength: "weak" as const, color: "#EF4444" };
+    return {
+      strength: "weak" as const,
+      color: globalStyles.colors.destructive,
+    };
   }
 
   if (password.length < PASSWORD_MIN_LENGTH) {
-    return { strength: "medium" as const, color: "#F59E0B" };
+    return { strength: "medium" as const, color: globalStyles.colors.warning };
   }
 
   try {
     strongPasswordSchema.parse(password);
-    return { strength: "strong" as const, color: "#10B981" };
+    return { strength: "strong" as const, color: globalStyles.colors.success };
   } catch {
-    return { strength: "medium" as const, color: "#F59E0B" };
+    return { strength: "medium" as const, color: globalStyles.colors.warning };
   }
 };
 
@@ -70,4 +75,5 @@ export const PASSWORD_REQUIREMENTS = [
   "One uppercase letter",
   "One lowercase letter",
   "One number",
+  "One special character (!@#$%^&*()_+-=[]{};':\"\\|,.<>/?])",
 ] as const;

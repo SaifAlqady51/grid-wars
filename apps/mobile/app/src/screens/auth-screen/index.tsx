@@ -11,62 +11,25 @@ import {
 import { styles } from "./components/styles";
 import { RegisterForm } from "./components/register-form";
 import { LoginForm } from "./components/login-form";
-import { LoginFormData, RegisterFormData } from "./schema";
-import { AccountService } from "../../service/account-service";
+import { Button } from "../../components/ui";
 
-export const AuthScreen: React.FC = () => {
+export const AuthScreen: React.FC<{ onFinish: () => void }> = ({
+  onFinish,
+}) => {
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-
-  const handleSignIn = async (data: LoginFormData): Promise<void> => {
-    setLoading(true);
-    try {
-      console.log("Sign in data:", data);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      Alert.alert("Success", "Signed in successfully!");
-    } catch (error) {
-      Alert.alert("Error", "Sign in failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async (
-    data: Omit<RegisterFormData, "confirmPassword">,
-  ): Promise<void> => {
-    setLoading(true);
-    try {
-      console.log("Sign up data:", data);
-
-      const accountCreated = await AccountService.getInstance().register({
-        ...data,
-      });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      Alert.alert("Success", "Account created successfully!");
-    } catch (error) {
-      Alert.alert("Error", "Account creation failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleSignIn = async (): Promise<void> => {
     setLoading(true);
     try {
       console.log("Google sign in initiated");
-
       // Simulate Google sign in
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
       Alert.alert("Success", "Signed in with Google successfully!");
-    } catch (error) {
-      Alert.alert("Error", "Google sign in failed. Please try again.");
+    } catch (error: any) {
+      const errorMessage =
+        error.message || "Google sign in failed. Please try again.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,9 +58,9 @@ export const AuthScreen: React.FC = () => {
 
           {/* Auth Form */}
           {isSignUp ? (
-            <RegisterForm onSubmit={handleSignUp} loading={loading} />
+            <RegisterForm onFinish={onFinish} />
           ) : (
-            <LoginForm onSubmit={handleSignIn} loading={loading} />
+            <LoginForm onFinish={onFinish} />
           )}
 
           {/* Divider */}
@@ -118,6 +81,9 @@ export const AuthScreen: React.FC = () => {
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </View>
           </TouchableOpacity>
+          <Button variant="secondary" onPress={onFinish}>
+            <Text>Skip for now</Text>
+          </Button>
 
           {/* Toggle Auth Mode */}
           <View style={styles.footer}>
