@@ -33,6 +33,14 @@ export class Account {
   @Exclude()
   password: string;
 
+  @Column({
+    name: 'profile_image',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
+  profileImage: string;
+
   @Column({ name: 'wins', type: 'int', default: 0 })
   wins: number;
 
@@ -41,6 +49,12 @@ export class Account {
 
   @Column({ name: 'draws', type: 'int', default: 0 })
   draws: number;
+
+  @Column({ name: 'total_games', type: 'int', default: 0 })
+  totalGames: number;
+
+  @Column({ name: 'level', type: 'int', default: 1 })
+  level: number;
 
   @CreateDateColumn({
     name: 'created_at',
