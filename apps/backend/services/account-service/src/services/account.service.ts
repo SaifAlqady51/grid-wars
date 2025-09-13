@@ -104,6 +104,9 @@ export class AccountService {
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
       isActive: account.isActive,
+      totalGames: account.totalGames,
+      profileImage: account.profileImage,
+      level: account.level,
     };
   }
   async updateUsername(
