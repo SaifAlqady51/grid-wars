@@ -16,9 +16,9 @@ import { ConfigService } from '@nestjs/config';
 import { Account } from '@/entity/account.entity';
 import { AccountValidatorService } from '@/validation/account-validator';
 import { PasswordService } from '@/validation/password-validator';
-import { JwtAuthService } from '@/security/jwt.service';
 import { RegisterDto } from '@/dto/account-register.dto';
 import { LoginDto } from '@/dto/account-login.dto';
+import { JwtAuthService } from '@/jwt';
 
 describe('AccountService', () => {
   let service: AccountService;
@@ -44,7 +44,10 @@ describe('AccountService', () => {
     isActive: true,
   };
 
-  const mockAccessToken = 'mock-jwt-token';
+  const mockAccessToken = {
+    accessToken: 'mock-jwt-token',
+    expiresAt: 100000,
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -156,7 +159,7 @@ describe('AccountService', () => {
         mockAccount as Account,
       );
       expect(generateTokenSpy).toHaveBeenCalledWith({
-        id: mockAccount.id!,
+        sub: mockAccount.id!,
         email: mockAccount.email!,
       });
       expect(result).toEqual({
@@ -263,7 +266,7 @@ describe('AccountService', () => {
         mockAccount.password!,
       );
       expect(generateTokenSpy).toHaveBeenCalledWith({
-        id: mockAccount.id!,
+        sub: mockAccount.id!,
         email: mockAccount.email!,
       });
       expect(result).toEqual({
@@ -329,7 +332,7 @@ describe('AccountService', () => {
 
       // Assert
       expect(generateTokenSpy).toHaveBeenCalledWith({
-        id: mockAccount.id!,
+        sub: mockAccount.id!,
         email: mockAccount.email!,
       });
     });
@@ -386,7 +389,7 @@ describe('AccountService', () => {
       // Assert
       expect(generateTokenSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: expect.any(String),
+          sub: expect.any(String),
           email: expect.any(String),
         }),
       );
@@ -407,7 +410,7 @@ describe('AccountService', () => {
 
       // Assert
       expect(generateTokenSpy).toHaveBeenCalledWith({
-        id: mockAccount.id!,
+        sub: mockAccount.id!,
         email: mockAccount.email!,
       });
     });
