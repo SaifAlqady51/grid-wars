@@ -14,7 +14,7 @@ async function generateTypes() {
 
     // Generate types from running NestJS Swagger
     await generateApi({
-      name: "index.ts",
+      name: "api.ts",
       output: OUTPUT_DIR,
       url: "http://localhost:3001/api-json",
       generateClient: false, // Set to true if you want API client too
@@ -34,11 +34,11 @@ async function generateTypes() {
     });
 
     console.log("✅ Types generated successfully!");
-    console.log("📁 Output: packages/types/src/generated/index.ts");
+    console.log("📁 Output: packages/types/src/generated/Api.ts");
   } catch (error) {
     console.error("❌ Error generating types:", error.message);
     console.log(
-      "💡 Make sure your NestJS server is running on http://localhost:3000",
+      "💡 Make sure your NestJS server is running on http://localhost:3001/api-json",
     );
     process.exit(1);
   }
