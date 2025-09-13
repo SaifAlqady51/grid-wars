@@ -55,11 +55,15 @@ export class Account {
   @Exclude()
   password: string;
 
-  @ApiProperty({
-    description: 'Number of wins',
-    example: 5,
-    default: 0,
+  @Column({
+    name: 'profile_image',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
   })
+  profileImage: string;
+
+
   @Column({ name: 'wins', type: 'int', default: 0 })
   wins: number;
 
@@ -79,10 +83,13 @@ export class Account {
   @Column({ name: 'draws', type: 'int', default: 0 })
   draws: number;
 
-  @ApiProperty({
-    description: 'Account creation timestamp',
-    example: '2024-01-01T00:00:00.000Z',
-  })
+  @Column({ name: 'total_games', type: 'int', default: 0 })
+  totalGames: number;
+
+  @Column({ name: 'level', type: 'int', default: 1 })
+  level: number;
+
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
