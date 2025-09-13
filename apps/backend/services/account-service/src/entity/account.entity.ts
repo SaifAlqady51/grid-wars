@@ -6,15 +6,32 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('accounts')
 export class Account {
+  @ApiProperty({
+    description: 'Unique identifier (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ApiProperty({
+    description: 'Username (3-50 characters)',
+    example: 'john_doe',
+    minLength: 3,
+    maxLength: 50,
+  })
   @Column({ name: 'username', type: 'varchar', length: 50, nullable: false })
   username: string;
 
+  @ApiProperty({
+    description: 'Email address',
+    example: 'user@example.com',
+    required: true,
+    nullable: true,
+  })
   @Column({
     name: 'email',
     type: 'varchar',
@@ -24,6 +41,11 @@ export class Account {
   })
   email: string;
 
+  @ApiProperty({
+    description: 'Password hash (excluded from responses)',
+    example: 'hashed_password_string',
+    writeOnly: true, // This ensures it's only used for input, not output
+  })
   @Column({
     name: 'password_hash',
     type: 'varchar',
@@ -41,12 +63,23 @@ export class Account {
   })
   profileImage: string;
 
+
   @Column({ name: 'wins', type: 'int', default: 0 })
   wins: number;
 
+  @ApiProperty({
+    description: 'Number of losses',
+    example: 3,
+    default: 0,
+  })
   @Column({ name: 'losses', type: 'int', default: 0 })
   losses: number;
 
+  @ApiProperty({
+    description: 'Number of draws',
+    example: 2,
+    default: 0,
+  })
   @Column({ name: 'draws', type: 'int', default: 0 })
   draws: number;
 
@@ -56,6 +89,7 @@ export class Account {
   @Column({ name: 'level', type: 'int', default: 1 })
   level: number;
 
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
@@ -63,6 +97,10 @@ export class Account {
   })
   createdAt: Date;
 
+  @ApiProperty({
+    description: 'Account last update timestamp',
+    example: '2024-01-01T00:00:00.000Z',
+  })
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
@@ -71,9 +109,19 @@ export class Account {
   })
   updatedAt: Date;
 
+  @ApiProperty({
+    description: 'Whether the account is active',
+    example: true,
+    default: true,
+  })
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @ApiProperty({
+    description: 'Current streak days',
+    example: 7,
+    default: 0,
+  })
   @Column({ name: 'streak_days', type: 'int', default: 0 })
   streakDays: number;
 }

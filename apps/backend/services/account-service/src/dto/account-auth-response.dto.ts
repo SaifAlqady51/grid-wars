@@ -1,22 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Account } from 'src/entity/account.entity';
+import { AccountWithoutPassword } from './account-without-password.dto';
+
+export class TokenResponse {
+  @ApiProperty({
+    description: 'JWT access token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
+
+  @ApiProperty({
+    description: 'Token expiration time in seconds',
+    example: 3600,
+  })
+  expiresAt: number;
+}
 
 export class AccountAuthResponse {
   @ApiProperty({
     description: 'User account information without password',
-    type: Account,
+    type: AccountWithoutPassword,
   })
-  user: Partial<Account>;
+  user: AccountWithoutPassword;
 
   @ApiProperty({
     description: 'Authentication token',
-    example: {
-      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      expiresAt: 3600,
-    },
+    type: TokenResponse,
   })
-  token: {
-    accessToken: string;
-    expiresAt: number;
-  };
+  token: TokenResponse;
 }

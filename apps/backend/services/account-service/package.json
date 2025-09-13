@@ -25,7 +25,13 @@
     "db:shell": "docker exec -it account_service_db psql -U postgres -d account_database",
     "copy-env": "cp .env dist/.env",
     "copy-package": "cp package.json dist/package.json",
-    "build-with-package": "npm run build && npm run copy-package && npm run copy-env"
+    "build-with-package": "npm run build && npm run copy-package && npm run copy-env",
+    "generate-swagger": "npm run build-with-package && npm run start:prod & sleep 8 && curl http://localhost:3001/api-json > swagger.json && pkill -f 'node dist/main'",
+    "generate-types": "npx swagger-typescript-api generate -p swagger.json -o ../../../../packages/types/src -n api.ts --modular --extract-request-params --extract-response-body --clean-output false --generate-client",
+    "generate-types:dev": "npm run generate-swagger && npm run generate-types && cd ../../packages/types && npm run build",
+    "generate-types:if-needed": "if [ -f swagger.json ]; then npm run generate-types; fi",
+    "types:generate": "npm run generate-types:dev",
+    "types:watch": "chokidar 'src/dto/*.dto.ts' 'src/entity/*.entity.ts' -c 'npm run generate-types:dev'"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -67,6 +73,7 @@
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
+    "swagger-typescript-api": "^13.2.9",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",

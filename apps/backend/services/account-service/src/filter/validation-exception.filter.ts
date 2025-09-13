@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ApiResponseDto } from '../dto/api-response';
+import { ApiResponseDto } from '../dto/api-response.dto';
 import { ValidationError } from 'class-validator';
 
 @Catch(BadRequestException)
