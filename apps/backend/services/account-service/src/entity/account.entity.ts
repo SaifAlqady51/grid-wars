@@ -30,7 +30,7 @@ export class Account {
     description: 'Email address',
     example: 'user@example.com',
     required: true,
-    nullable: true,
+    nullable: false,
   })
   @Column({
     name: 'email',
@@ -41,11 +41,6 @@ export class Account {
   })
   email: string;
 
-  @ApiProperty({
-    description: 'Password hash (excluded from responses)',
-    example: 'hashed_password_string',
-    writeOnly: true, // This ensures it's only used for input, not output
-  })
   @Column({
     name: 'password_hash',
     type: 'varchar',
@@ -55,6 +50,11 @@ export class Account {
   @Exclude()
   password: string;
 
+  @ApiProperty({
+    description: 'Profile image URL',
+    example: 'https://example.com/profile.jpg',
+    nullable: true,
+  })
   @Column({
     name: 'profile_image',
     type: 'varchar',
@@ -63,7 +63,11 @@ export class Account {
   })
   profileImage: string;
 
-
+  @ApiProperty({
+    description: 'Number of wins',
+    example: 5,
+    default: 0,
+  })
   @Column({ name: 'wins', type: 'int', default: 0 })
   wins: number;
 
@@ -83,13 +87,26 @@ export class Account {
   @Column({ name: 'draws', type: 'int', default: 0 })
   draws: number;
 
+  @ApiProperty({
+    description: 'Total games played',
+    example: 10,
+    default: 0,
+  })
   @Column({ name: 'total_games', type: 'int', default: 0 })
   totalGames: number;
 
+  @ApiProperty({
+    description: 'Account level',
+    example: 5,
+    default: 1,
+  })
   @Column({ name: 'level', type: 'int', default: 1 })
   level: number;
 
-
+  @ApiProperty({
+    description: 'Account creation timestamp',
+    example: '2024-01-01T00:00:00.000Z',
+  })
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
