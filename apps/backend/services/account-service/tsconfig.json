@@ -22,7 +22,10 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@account/*": ["src/account/*"],
+      "@aws-s3/*": ["src/aws-s3/*"],
+      "@file-upload/*": ["src/file-upload/*"]
     }
   }
 }
