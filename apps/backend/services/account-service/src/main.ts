@@ -1,10 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { HttpExceptionFilter, ValidationExceptionFilter } from '@/filter';
-import { AccountModule } from './account.module';
+import {
+  HttpExceptionFilter,
+  ValidationExceptionFilter,
+} from '@account/filter';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
 import * as process from 'process';
+import { AccountModule } from './account/account.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AccountModule);
