@@ -27,12 +27,12 @@ export interface Account {
    * Email address
    * @example "user@example.com"
    */
-  email: string | null;
+  email: string;
   /**
-   * Password hash (excluded from responses)
-   * @example "hashed_password_string"
+   * Profile image URL
+   * @example "https://example.com/profile.jpg"
    */
-  password: string;
+  profileImage: string | null;
   /**
    * Number of wins
    * @default 0
@@ -51,6 +51,18 @@ export interface Account {
    * @example 2
    */
   draws: number;
+  /**
+   * Total games played
+   * @default 0
+   * @example 10
+   */
+  totalGames: number;
+  /**
+   * Account level
+   * @default 1
+   * @example 5
+   */
+  level: number;
   /**
    * Account creation timestamp
    * @format date-time
@@ -150,7 +162,12 @@ export interface AccountWithoutPassword {
    * Email address
    * @example "user@example.com"
    */
-  email: string | null;
+  email: string;
+  /**
+   * Profile image URL
+   * @example "https://example.com/profile.jpg"
+   */
+  profileImage: string | null;
   /**
    * Number of wins
    * @default 0
@@ -169,6 +186,18 @@ export interface AccountWithoutPassword {
    * @example 2
    */
   draws: number;
+  /**
+   * Total games played
+   * @default 0
+   * @example 10
+   */
+  totalGames: number;
+  /**
+   * Account level
+   * @default 1
+   * @example 5
+   */
+  level: number;
   /**
    * Account creation timestamp
    * @format date-time
@@ -215,9 +244,9 @@ export interface AccountAuthResponse {
   token: TokenResponse;
 }
 
-export interface ApiResponseDto<T = object> {
+export interface ApiResponseDto {
   /** Response data payload */
-  data: T | null;
+  data: object | null;
   /**
    * Human-readable message describing the result
    * @example "Operation completed successfully"

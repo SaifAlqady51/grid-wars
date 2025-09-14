@@ -13,12 +13,11 @@ import { AccountService } from './account.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Account } from '@/entity/account.entity';
-import { AccountValidatorService } from '@/validation/account-validator';
-import { PasswordService } from '@/validation/password-validator';
-import { RegisterDto } from '@/dto/account-register.dto';
-import { LoginDto } from '@/dto/account-login.dto';
-import { JwtAuthService } from '@/jwt';
+import { AccountValidatorService, PasswordService } from '@account/validation/';
+import { RegisterDto, LoginDto } from '@account/dto';
+import { JwtAuthService } from '@account/jwt';
+import { Account } from './entity/account.entity';
+import { AwsS3Service } from '@/aws-s3/aws-s3.service';
 
 describe('AccountService', () => {
   let service: AccountService;
@@ -94,6 +93,12 @@ describe('AccountService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn(),
+          },
+        },
+        {
+          provide: AwsS3Service,
+          useValue: {
+            uploadFile: jest.fn(),
           },
         },
       ],

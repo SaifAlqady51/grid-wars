@@ -1,13 +1,3 @@
-import { IncludeAllModels } from '@/decorators/swagger-decorator';
-import { AccountAuthResponse } from '@/dto/account-auth-response.dto';
-import { LoginDto } from '@/dto/account-login.dto';
-import { RegisterDto } from '@/dto/account-register.dto';
-import { ApiResponseDto } from '@/dto/api-response.dto';
-import { UpdatePasswordDto } from '@/dto/update-password.dto';
-import { UpdateUsernameDto } from '@/dto/update-username.dto';
-import { Account } from '@/entity/account.entity';
-import { JwtPayload, UseAuth, type UserPayload } from '@/jwt';
-import { AccountService } from '@/services/account.service';
 import {
   Controller,
   Post,
@@ -16,8 +6,30 @@ import {
   HttpStatus,
   Get,
   Patch,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { type Express } from 'express';
+import { IncludeAllModels } from './decorators/swagger-decorator';
+import { AccountService } from './account.service';
+import {
+  AccountAuthResponse,
+  ApiResponseDto,
+  LoginDto,
+  RegisterDto,
+  UpdatePasswordDto,
+  UpdateUsernameDto,
+} from '@account/dto';
+import { JwtPayload, UseAuth, type UserPayload } from '@account/jwt';
+import { Account } from './entity/account.entity';
 
 @Controller('accounts')
 @IncludeAllModels()
@@ -95,19 +107,18 @@ export class AccountController {
   @ApiResponse({
     status: 200,
     description: 'Username updated successfully',
-    type: ApiResponseDto<Account>,
+    type: ApiResponseDto<null>,
   })
   async updateUsername(
     @Body() username: UpdateUsernameDto,
     @JwtPayload() { sub }: UserPayload,
-  ): Promise<ApiResponseDto<Omit<Account, 'password'>>> {
+  ): Promise<ApiResponseDto<null>> {
     const updatedAccount = await this.accountService.updateUsername(
       sub,
       username,
     );
-    return new ApiResponseDto<Omit<Account, 'password'>>({
-      data: updatedAccount,
-      message: 'Username updated successfully',
+    return new ApiResponseDto<null>({
+      message: updatedAccount.message,
       error: false,
       timestamp: new Date().toISOString(),
       status: HttpStatus.OK,
@@ -132,6 +143,49 @@ export class AccountController {
     );
     return new ApiResponseDto<null>({
       message: updatePasswordMessage.message,
+      error: false,
+      timestamp: new Date().toISOString(),
+      status: HttpStatus.OK,
+    });
+  }
+  @Post('upload-image')
+  @UseAuth
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload profile image from device' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'Profile image file (JPEG, PNG, GIF, WebP, max 5MB)',
+        },
+      },
+      required: ['image'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile image uploaded successfully',
+    type: ApiResponseDto<null>,
+  })
+  async uploadProfileImage(
+    @JwtPayload() { sub }: UserPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ApiResponseDto<null>> {
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+
+    const profileImage = await this.accountService.uploadProfileImage(
+      sub,
+      file,
+    );
+
+    return new ApiResponseDto<null>({
+      message: profileImage.message,
       error: false,
       timestamp: new Date().toISOString(),
       status: HttpStatus.OK,

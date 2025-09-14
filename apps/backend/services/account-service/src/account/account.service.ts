@@ -1,28 +1,34 @@
-import { AccountAuthResponse } from '@/dto/account-auth-response.dto';
-import { LoginDto } from '@/dto/account-login.dto';
-import { RegisterDto } from '@/dto/account-register.dto';
-import { UpdatePasswordDto } from '@/dto/update-password.dto';
-import { UpdateUsernameDto } from '@/dto/update-username.dto';
-import { Account } from '@/entity/account.entity';
-import { JwtAuthService } from '@/jwt/jwt.service';
-import { AccountValidatorService } from '@/validation/account-validator';
-import { PasswordService } from '@/validation/password-validator';
+import {
+  AccountAuthResponse,
+  LoginDto,
+  RegisterDto,
+  UpdatePasswordDto,
+  UpdateUsernameDto,
+} from '@account/dto';
+import { Account } from '@account/entity/account.entity';
+import { JwtAuthService } from '@account/jwt/jwt.service';
+import { AccountValidatorService, PasswordService } from '@account/validation';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { type Express } from 'express';
+import { AwsS3Service } from '@/aws-s3/aws-s3.service';
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
     private readonly accountValidatorService: AccountValidatorService,
     private readonly passwordService: PasswordService,
     private readonly jwtAuthService: JwtAuthService,
+    private readonly awsS3Service: AwsS3Service,
   ) { }
 
   async register(registerDto: RegisterDto): Promise<AccountAuthResponse> {
@@ -112,7 +118,7 @@ export class AccountService {
   async updateUsername(
     userId: string,
     updateUsernameDto: UpdateUsernameDto,
-  ): Promise<Omit<Account, 'password'>> {
+  ): Promise<{ message: string }> {
     const account = await this.accountRepository.findOne({
       where: { id: userId, isActive: true },
     });
@@ -130,10 +136,9 @@ export class AccountService {
     account.username = updateUsernameDto.username;
     account.updatedAt = new Date();
 
-    const updatedAccount = await this.accountRepository.save(account);
+    await this.accountRepository.save(account);
 
-    const { password: _password, ...accountWithoutPassword } = updatedAccount;
-    return accountWithoutPassword;
+    return { message: 'Username updated successfully' };
   }
 
   async updatePassword(
@@ -173,5 +178,39 @@ export class AccountService {
     await this.accountRepository.save(account);
 
     return { message: 'Password updated successfully' };
+  }
+  async uploadProfileImage(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<{ message: string }> {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new Error(
+        'Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.',
+      );
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      throw new Error('File size too large. Maximum allowed size is 5MB.');
+    }
+
+    const timestamp = Date.now();
+    const fileExtension = file.originalname.split('.').pop() || 'jpg';
+    const key = `profile-${userId}-${timestamp}.${fileExtension}`;
+
+    try {
+      const url = await this.awsS3Service.uploadFile(file, key);
+      await this.accountRepository.update(userId, { profileImage: url });
+      return { message: ' Profile image uploaded successfully' };
+    } catch (error) {
+      this.logger.error('Error uploading profile image', error);
+      throw new InternalServerErrorException('Failed to upload profile image');
+    }
   }
 }

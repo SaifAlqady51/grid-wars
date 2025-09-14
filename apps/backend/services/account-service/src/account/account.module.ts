@@ -4,12 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AccountValidatorService } from './validation/account-validator';
-import { PasswordService } from '@/validation/password-validator';
-import { Account } from '@/entity/account.entity';
-import { JWTAccessTokenStrategy, JwtAuthService } from '@/jwt';
-import { AccountController } from '@/controllers/account.controller';
-import { AccountService } from '@/services/account.service';
-import { JwtAuthGuard } from './jwt/jwt-auth.guard';
+import { PasswordService } from '@account/validation/';
+import { Account } from '@account/entity/account.entity';
+import { JWTAccessTokenStrategy, JwtAuthService } from '@account/jwt';
+import { AccountController } from '@account/account.controller';
+import { AccountService } from '@account/account.service';
+import { JwtAuthGuard } from '@account/jwt';
+import { AwsS3Service } from '@aws-s3/aws-s3.service';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { JwtAuthGuard } from './jwt/jwt-auth.guard';
   controllers: [AccountController],
   providers: [
     AccountService,
+    AwsS3Service,
     AccountValidatorService,
     PasswordService,
     JwtAuthService,
