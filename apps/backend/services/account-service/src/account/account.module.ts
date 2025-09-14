@@ -10,8 +10,6 @@ import { JWTAccessTokenStrategy, JwtAuthService } from '@account/jwt';
 import { AccountController } from '@account/account.controller';
 import { AccountService } from '@account/account.service';
 import { JwtAuthGuard } from '@account/jwt';
-import { FileUploadService } from '@file-upload/file-upload.service';
-import { FileUploadModule } from '@file-upload/file-upload.module';
 import { AwsS3Service } from '@aws-s3/aws-s3.service';
 
 @Module({
@@ -39,7 +37,7 @@ import { AwsS3Service } from '@aws-s3/aws-s3.service';
     }),
     TypeOrmModule.forFeature([Account]),
     JwtModule.registerAsync({
-      imports: [ConfigModule, FileUploadModule],
+      imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         signOptions: {
           expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION', '7d'),
@@ -47,12 +45,10 @@ import { AwsS3Service } from '@aws-s3/aws-s3.service';
       }),
       inject: [ConfigService],
     }),
-    FileUploadModule,
   ],
   controllers: [AccountController],
   providers: [
     AccountService,
-    FileUploadService,
     AwsS3Service,
     AccountValidatorService,
     PasswordService,
