@@ -10,11 +10,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountService } from './account.service';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AccountValidatorService, PasswordService } from '@account/validation/';
-import { RegisterDto, LoginDto } from '@account/dto';
+import { RegisterDto, LoginDto, UpdateUsernameDto } from '@account/dto';
 import { JwtAuthService } from '@account/jwt';
 import { Account } from './entity/account.entity';
 import { AwsS3Service } from '@/aws-s3/aws-s3.service';
@@ -32,15 +36,31 @@ describe('AccountService', () => {
     username: 'testuser',
     password: 'hashedPassword123',
     createdAt: new Date(),
+    updatedAt: new Date(),
     isActive: true,
+    wins: 10,
+    losses: 5,
+    draws: 2,
+    streakDays: 3,
+    level: 5,
+    profileImage: 'profile.jpg',
+    totalGames: 17,
   };
 
   const mockAccountWithoutPassword = {
     id: '1',
     email: 'test@example.com',
     username: 'testuser',
-    createdAt: mockAccount.createdAt,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     isActive: true,
+    wins: 10,
+    losses: 5,
+    draws: 2,
+    streakDays: 3,
+    level: 5,
+    profileImage: 'profile.jpg',
+    totalGames: 17,
   };
 
   const mockAccessToken = {
@@ -57,6 +77,7 @@ describe('AccountService', () => {
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
+            findOne: jest.fn(),
           },
         },
         {
@@ -418,6 +439,67 @@ describe('AccountService', () => {
         sub: mockAccount.id!,
         email: mockAccount.email!,
       });
+    });
+  });
+  describe('updateUsername', () => {
+    const userId = '1';
+    const updateUsernameDto: UpdateUsernameDto = {
+      username: 'newusername',
+    };
+
+    it('should successfully update username when new username is different', async () => {
+      // Arrange
+      const mockAccount = {
+        id: userId,
+        username: 'oldusername',
+        isActive: true,
+        updatedAt: new Date(),
+      } as Account;
+
+      jest.spyOn(accountRepository, 'findOne').mockResolvedValue(mockAccount);
+      jest.spyOn(accountRepository, 'save').mockResolvedValue({
+        ...mockAccount,
+        username: updateUsernameDto.username,
+      } as Account);
+
+      // Act
+      const result = await service.updateUsername(userId, updateUsernameDto);
+
+      // Assert
+      expect(accountRepository.findOne).toHaveBeenCalledWith({
+        where: { id: userId, isActive: true },
+      });
+      expect(accountRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          username: updateUsernameDto.username,
+          updatedAt: expect.any(Date),
+        }),
+      );
+      expect(result).toEqual({ message: 'Username updated successfully' });
+    });
+
+    it('should not update username when new username is the same', async () => {
+      // Arrange
+      const mockAccount = {
+        id: userId,
+        username: 'newusername', // Same as updateUsernameDto.username
+        isActive: true,
+        updatedAt: new Date(),
+      } as Account;
+
+      jest.spyOn(accountRepository, 'findOne').mockResolvedValue(mockAccount);
+
+      // Act & Assert
+      await expect(
+        service.updateUsername(userId, updateUsernameDto),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateUsername(userId, updateUsernameDto),
+      ).rejects.toThrow('New username must be different from current username');
+
+      // Verify save was never called
+      expect(accountRepository.save).not.toHaveBeenCalled();
     });
   });
 });
