@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AccountValidatorService } from './validation/account-validator';
 import { PasswordService } from '@account/validation/';
 import { Account } from '@account/entity/account.entity';
-import { JWTAccessTokenStrategy, JwtAuthService } from '@account/jwt';
+import { JwtAuthModule } from '@grid-wars/jwt';
 import { AccountController } from '@account/account.controller';
 import { AccountService } from '@account/account.service';
-import { JwtAuthGuard } from '@account/jwt';
 import { AwsS3Service } from '@aws-s3/aws-s3.service';
 
 @Module({
@@ -36,15 +34,7 @@ import { AwsS3Service } from '@aws-s3/aws-s3.service';
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([Account]),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        signOptions: {
-          expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION', '7d'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtAuthModule.forRootAsync({ isGlobal: false }), // Use the dynamic module
   ],
   controllers: [AccountController],
   providers: [
@@ -52,10 +42,6 @@ import { AwsS3Service } from '@aws-s3/aws-s3.service';
     AwsS3Service,
     AccountValidatorService,
     PasswordService,
-    JwtAuthService,
-    JWTAccessTokenStrategy,
-    JwtAuthGuard,
   ],
-  exports: [JwtAuthService, JWTAccessTokenStrategy],
 })
 export class AccountModule { }
