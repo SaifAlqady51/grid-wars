@@ -20,7 +20,8 @@
   "workspaces": [
     "apps/*",
     "backend/*",
-    "packages/*"
+    "packages/*",
+    "backend/libs/*"
   ],
   "dependencies": {
     "@nestjs/config": "^4.0.2",
