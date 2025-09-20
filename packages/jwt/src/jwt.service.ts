@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { JwtService as NestJwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { UserPayload } from "./jwt.types";
-import * as ms from "ms";
+import ms from "ms";
 
 @Injectable()
 export class JwtAuthService {
