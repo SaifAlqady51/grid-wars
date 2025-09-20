@@ -28,7 +28,7 @@ import {
   UpdatePasswordDto,
   UpdateUsernameDto,
 } from '@account/dto';
-import { JwtPayload, UseAuth, type UserPayload } from '@account/jwt';
+import { JwtPayload, UseAuth, type UserPayload } from '@grid-wars/jwt';
 import { Account } from './entity/account.entity';
 
 @Controller('accounts')

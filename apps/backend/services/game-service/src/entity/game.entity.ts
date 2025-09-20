@@ -17,7 +17,6 @@ export enum GameStatus {
 export enum GameMode {
   PVP = 'pvp',
   AI = 'ai',
-  LOCAL = 'local',
 }
 
 export enum Difficulty {

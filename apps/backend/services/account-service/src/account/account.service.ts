@@ -6,7 +6,7 @@ import {
   UpdateUsernameDto,
 } from '@account/dto';
 import { Account } from '@account/entity/account.entity';
-import { JwtAuthService } from '@account/jwt/jwt.service';
+import { JwtAuthService } from '@grid-wars/jwt';
 import { AccountValidatorService, PasswordService } from '@account/validation';
 import {
   BadRequestException,

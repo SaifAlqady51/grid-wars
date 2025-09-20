@@ -18,9 +18,10 @@
   },
   "packageManager": "npm@11.5.2",
   "workspaces": [
-    "app/*",
+    "apps/*",
     "backend/*",
-    "packages/*"
+    "packages/*",
+    "backend/libs/*"
   ],
   "dependencies": {
     "@nestjs/config": "^4.0.2",

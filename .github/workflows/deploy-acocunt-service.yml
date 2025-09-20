@@ -4,10 +4,12 @@ on:
     branches: ["*"]
     paths:
       - "apps/backend/services/account-service/**"
+      - "packages/jwt/**"
   pull_request:
     branches: ["*"]
     paths:
       - "apps/backend/services/account-service/**"
+      - "packages/jwt/**"
 
 jobs:
   deploy:
@@ -22,11 +24,24 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: "apps/backend/services/account-service/package-lock.json"
+          cache-dependency-path: |
+            apps/backend/services/account-service/package-lock.json
+            packages/jwt/package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install JWT package dependencies
+        working-directory: ./packages/jwt
+        run: npm ci
+
+      - name: Install account service dependencies
         working-directory: ./apps/backend/services/account-service
         run: npm ci
+
+      - name: Build JWT package
+        working-directory: ./packages/jwt
+        run: npm run build || npx tsc
 
       - name: Build application with package files (skip env copy)
         working-directory: ./apps/backend/services/account-service

@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { UserPayload } from './jwt.types';
-import ms from 'ms';
+import { Injectable } from "@nestjs/common";
+import { JwtService as NestJwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import { UserPayload } from "./jwt.types";
+import ms from "ms";
 
 @Injectable()
 export class JwtAuthService {
@@ -12,7 +12,7 @@ export class JwtAuthService {
     private readonly jwtService: NestJwtService,
     private readonly configService: ConfigService,
   ) {
-    this.expirationMs = ms('7d');
+    this.expirationMs = ms("7d");
   }
 
   async generateToken({
@@ -27,12 +27,12 @@ export class JwtAuthService {
     const expiresAt = Date.now() + this.expirationMs;
 
     const token = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      secret: this.configService.get<string>("ACCESS_TOKEN_SECRET"),
       expiresIn: this.configService.get<string>(
-        'ACCESS_TOKEN_EXPIRATION',
-        '7d',
+        "ACCESS_TOKEN_EXPIRATION",
+        "7d",
       ),
-      issuer: 'grid-wars',
+      issuer: "grid-wars",
     });
 
     return {
@@ -43,7 +43,7 @@ export class JwtAuthService {
 
   async verifyToken(token: string): Promise<UserPayload> {
     return this.jwtService.verifyAsync<UserPayload>(token, {
-      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      secret: this.configService.get<string>("ACCESS_TOKEN_SECRET"),
     });
   }
 }
