@@ -12,6 +12,7 @@ on:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
       - ".github/workflows/deploy-account-service.yml"
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -119,8 +120,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           source: "apps/backend/services/account-service/deployment/*"
-          target: "~/grid-wars-account-service-new"
-          strip_components: 4
+          target: "~/grid-wars-account-service-new/"
+          strip_components: 5
           overwrite: true
 
       - name: Deploy and start service on EC2
@@ -144,6 +145,15 @@ jobs:
 
             # Move new deployment to active directory
             if [ -d "grid-wars-account-service-new" ]; then
+              # Check if files are in a nested deployment directory
+              if [ -d "grid-wars-account-service-new/deployment" ]; then
+                echo "Files found in nested deployment directory, moving them up..."
+                mv grid-wars-account-service-new grid-wars-account-service-temp
+                mkdir -p grid-wars-account-service-new
+                mv grid-wars-account-service-temp/deployment/* grid-wars-account-service-new/
+                rm -rf grid-wars-account-service-temp
+              fi
+              
               mv grid-wars-account-service-new grid-wars-account-service
               echo "New deployment moved to active directory"
             else
