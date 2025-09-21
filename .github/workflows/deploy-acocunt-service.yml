@@ -81,9 +81,8 @@ jobs:
           # Copy built files
           cp -r dist/* deployment/
 
-          # Copy package files for production
+          # Copy only essential package files for production
           cp package.json deployment/
-          cp package-lock.json deployment/
 
           # Create production package.json (only prod dependencies)
           node -p "
@@ -91,6 +90,8 @@ jobs:
             delete pkg.devDependencies;
             delete pkg.scripts.dev;
             delete pkg.scripts.build;
+            pkg.scripts = pkg.scripts || {};
+            pkg.scripts.start = 'node main.js';
             JSON.stringify(pkg, null, 2)
           " > deployment/package.json
 
@@ -179,13 +180,22 @@ jobs:
 
             # Install production dependencies
             echo "Installing production dependencies..."
-            if npm ci --omit=dev; then
-              echo "Dependencies installed successfully with npm ci"
+            echo "Current package.json content:"
+            cat package.json | head -20
+
+            # Remove any existing node_modules and package-lock.json
+            rm -rf node_modules package-lock.json
+
+            # Install dependencies with npm install
+            if npm install --production --no-package-lock --verbose; then
+              echo "✅ Dependencies installed successfully"
             else
-              echo "npm ci failed, trying npm install --production"
-              rm -f package-lock.json
-              npm install --production --no-package-lock
+              echo "❌ Dependency installation failed, trying basic npm install"
+              npm install --verbose || echo "Final npm install also failed, but continuing..."
             fi
+
+            echo "Installed packages:"
+            ls -la node_modules/ | head -10 || echo "No node_modules directory"
 
             # Create environment file
             echo "Creating environment configuration..."
@@ -251,35 +261,54 @@ jobs:
 
             # Wait for application to start
             echo "Waiting for application to start..."
-            sleep 10
+            sleep 15
 
             # Health check with retry
             for i in {1..5}; do
               echo "Health check attempt $i/5..."
+              
+              # First check if the process is actually running
+              pm2_status=$(pm2 jlist | jq -r '.[0].pm2_env.status' 2>/dev/null || echo "unknown")
+              echo "PM2 process status: $pm2_status"
+              
               # Try health endpoint first, then fallback to basic connection test
-              if curl -f http://localhost:3001/health; then
+              if curl -f -m 5 http://localhost:3001/health; then
                 echo "✅ Health check passed!"
                 break
-              elif curl -f http://localhost:3001/; then
+              elif curl -f -m 5 http://localhost:3001/; then
                 echo "✅ Basic connection successful (no /health endpoint)!"
                 break
               else
-                echo "❌ Health check failed, retrying in 5 seconds..."
+                echo "❌ Health check failed, retrying in 8 seconds..."
                 echo "Checking if application is running..."
                 pm2 status
-                echo "Checking application logs..."
-                pm2 logs grid-wars-account-service --lines 5 --nostream || true
-                sleep 5
+                echo "Recent application logs:"
+                pm2 logs grid-wars-account-service --lines 10 --nostream || true
+                
+                if [ $i -ge 3 ]; then
+                  echo "Checking system resources..."
+                  echo "Memory usage:"
+                  free -h
+                  echo "Disk space:"
+                  df -h
+                  echo "Network connections:"
+                  netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
+                fi
+                
+                sleep 8
               fi
               
               if [ $i -eq 5 ]; then
                 echo "⚠️  Health check failed after 5 attempts"
-                echo "Final application logs:"
-                pm2 logs grid-wars-account-service --lines 20 --nostream || true
-                echo "Environment variables check:"
-                pm2 env 0 2>/dev/null || true
-                echo "Port check:"
-                netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
+                echo "Final application logs (last 30 lines):"
+                pm2 logs grid-wars-account-service --lines 30 --nostream || true
+                echo "PM2 process info:"
+                pm2 show grid-wars-account-service || true
+                echo "Environment file content:"
+                echo "PORT=$(grep PORT .env || echo 'PORT not found')"
+                echo "NODE_ENV=$(grep NODE_ENV .env || echo 'NODE_ENV not found')"
+                echo "All listening ports:"
+                netstat -tlnp || ss -tlnp || echo "Cannot check listening ports"
               fi
             done
 
