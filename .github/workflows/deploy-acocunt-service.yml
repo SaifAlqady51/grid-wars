@@ -5,14 +5,14 @@ on:
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
-      - ".github/workflows/deploy-account-service.yml"
+      - ".github/workflows/deploy-account-service.yml" # Add this line
   pull_request:
     branches: ["*"]
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
-      - ".github/workflows/deploy-account-service.yml"
-  workflow_dispatch:
+      - ".github/workflows/deploy-account-service.yml" # Add this line
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   deploy:
@@ -261,7 +261,7 @@ jobs:
 
             # Wait for application to start
             echo "Waiting for application to start..."
-            sleep 15
+            sleep 20
 
             # Health check with retry
             for i in {1..5}; do
@@ -312,9 +312,34 @@ jobs:
               fi
             done
 
-            # Show final status
+            # Show final status with detailed debugging
+            echo "=== FINAL DEPLOYMENT STATUS ==="
             echo "Final PM2 status:"
             pm2 status
+
+            echo "=== APPLICATION LOGS ==="
+            pm2 logs grid-wars-account-service --lines 20 --nostream || true
+
+            echo "=== NETWORK DIAGNOSTICS ==="
+            echo "Checking if port 3001 is listening:"
+            netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
+
+            echo "All listening ports:"
+            netstat -tlnp | grep LISTEN | head -10 || ss -tlnp | grep LISTEN | head -10
+
+            echo "=== PROCESS INFORMATION ==="
+            echo "Node.js processes:"
+            ps aux | grep node || echo "No node processes found"
+
+            echo "=== APPLICATION FILES ==="
+            echo "Main application file:"
+            ls -la main.js
+            echo "Environment file exists:"
+            ls -la .env
+
+            echo "=== MANUAL CONNECTION TEST ==="
+            echo "Testing local connection to port 3001:"
+            timeout 5 bash -c "</dev/tcp/localhost/3001" && echo "Port 3001 is reachable" || echo "Port 3001 is not reachable"
 
             # Clean up old backups (keep only last 3)
             echo "Cleaning up old backups..."
