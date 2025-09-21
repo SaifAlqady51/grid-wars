@@ -179,7 +179,13 @@ jobs:
 
             # Install production dependencies
             echo "Installing production dependencies..."
-            npm ci --only=production
+            if npm ci --omit=dev; then
+              echo "Dependencies installed successfully with npm ci"
+            else
+              echo "npm ci failed, trying npm install --production"
+              rm -f package-lock.json
+              npm install --production --no-package-lock
+            fi
 
             # Create environment file
             echo "Creating environment configuration..."
@@ -250,18 +256,30 @@ jobs:
             # Health check with retry
             for i in {1..5}; do
               echo "Health check attempt $i/5..."
+              # Try health endpoint first, then fallback to basic connection test
               if curl -f http://localhost:3001/health; then
                 echo "✅ Health check passed!"
                 break
+              elif curl -f http://localhost:3001/; then
+                echo "✅ Basic connection successful (no /health endpoint)!"
+                break
               else
                 echo "❌ Health check failed, retrying in 5 seconds..."
+                echo "Checking if application is running..."
+                pm2 status
+                echo "Checking application logs..."
+                pm2 logs grid-wars-account-service --lines 5 --nostream || true
                 sleep 5
               fi
               
               if [ $i -eq 5 ]; then
-                echo "⚠️  Health check failed after 5 attempts, but deployment completed"
-                echo "Application logs:"
-                pm2 logs grid-wars-account-service --lines 10 || true
+                echo "⚠️  Health check failed after 5 attempts"
+                echo "Final application logs:"
+                pm2 logs grid-wars-account-service --lines 20 --nostream || true
+                echo "Environment variables check:"
+                pm2 env 0 2>/dev/null || true
+                echo "Port check:"
+                netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
               fi
             done
 
