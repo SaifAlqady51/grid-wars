@@ -5,14 +5,14 @@ on:
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
-      - ".github/workflows/deploy-account-service.yml" # Add this line
+      - ".github/workflows/deploy-account-service.yml"  # Add this line
   pull_request:
     branches: ["*"]
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
-      - ".github/workflows/deploy-account-service.yml" # Add this line
-  workflow_dispatch: # Allows manual triggering
+      - ".github/workflows/deploy-account-service.yml"  # Add this line
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   deploy:
@@ -77,13 +77,13 @@ jobs:
         run: |
           # Create a clean deployment directory
           mkdir -p deployment
-
+          
           # Copy built files
           cp -r dist/* deployment/
-
+          
           # Copy only essential package files for production
           cp package.json deployment/
-
+          
           # Create production package.json (only prod dependencies)
           node -p "
             const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
@@ -94,7 +94,7 @@ jobs:
             pkg.scripts.start = 'node main.js';
             JSON.stringify(pkg, null, 2)
           " > deployment/package.json
-
+          
           # List deployment contents
           echo "Deployment directory contents:"
           ls -la deployment/
@@ -182,10 +182,10 @@ jobs:
             echo "Installing production dependencies..."
             echo "Current package.json content:"
             cat package.json | head -20
-
+            
             # Remove any existing node_modules and package-lock.json
             rm -rf node_modules package-lock.json
-
+            
             # Install dependencies with npm install
             if npm install --production --no-package-lock --verbose; then
               echo "✅ Dependencies installed successfully"
@@ -193,25 +193,25 @@ jobs:
               echo "❌ Dependency installation failed, trying basic npm install"
               npm install --verbose || echo "Final npm install also failed, but continuing..."
             fi
-
+            
             echo "Installed packages:"
             ls -la node_modules/ | head -10 || echo "No node_modules directory"
 
             # Create environment file
             echo "Creating environment configuration..."
-            cat > .env << EOF
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_SYNCHRONIZE=false
-            NODE_ENV=production
-            PORT=3001
-            ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}
-            ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
-            ACCESS_TOKEN_EXPIRATION=7d
-            EOF
+            cat > .env << 'EOF'
+DB_HOST=${{ secrets.DB_HOST }}
+DB_PORT=${{ secrets.DB_PORT }}
+DB_USERNAME=${{ secrets.DB_USERNAME }}
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+DB_NAME=${{ secrets.DB_NAME }}
+DB_SYNCHRONIZE=false
+NODE_ENV=production
+PORT=3001
+ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}
+ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+ACCESS_TOKEN_EXPIRATION=7d
+EOF
 
             # Install PM2 globally if not exists
             if ! command -v pm2 &> /dev/null; then
@@ -246,7 +246,23 @@ jobs:
 
             # Start the application with PM2
             echo "Starting application with PM2..."
+            pm2 delete grid-wars-account-service 2>/dev/null || true
             pm2 start ecosystem.config.js
+            
+            # Wait a moment for potential immediate crashes
+            sleep 3
+            
+            # Check if it crashed immediately
+            pm2_status=$(pm2 jlist | jq -r '.[0].pm2_env.status' 2>/dev/null || echo "unknown")
+            echo "Initial PM2 process status: $pm2_status"
+            
+            if [ "$pm2_status" = "errored" ]; then
+              echo "⚠️ Application crashed immediately on startup!"
+              echo "Error logs:"
+              pm2 logs grid-wars-account-service --lines 10 --nostream
+              echo "Environment file content for debugging:"
+              cat .env
+            fi
 
             # Save PM2 configuration
             pm2 save
@@ -316,27 +332,27 @@ jobs:
             echo "=== FINAL DEPLOYMENT STATUS ==="
             echo "Final PM2 status:"
             pm2 status
-
+            
             echo "=== APPLICATION LOGS ==="
             pm2 logs grid-wars-account-service --lines 20 --nostream || true
-
+            
             echo "=== NETWORK DIAGNOSTICS ==="
             echo "Checking if port 3001 is listening:"
             netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
-
+            
             echo "All listening ports:"
             netstat -tlnp | grep LISTEN | head -10 || ss -tlnp | grep LISTEN | head -10
-
+            
             echo "=== PROCESS INFORMATION ==="
             echo "Node.js processes:"
             ps aux | grep node || echo "No node processes found"
-
+            
             echo "=== APPLICATION FILES ==="
             echo "Main application file:"
             ls -la main.js
             echo "Environment file exists:"
             ls -la .env
-
+            
             echo "=== MANUAL CONNECTION TEST ==="
             echo "Testing local connection to port 3001:"
             timeout 5 bash -c "</dev/tcp/localhost/3001" && echo "Port 3001 is reachable" || echo "Port 3001 is not reachable"
