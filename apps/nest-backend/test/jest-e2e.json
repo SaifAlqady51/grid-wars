@@ -1,0 +1,21 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "@grid-wars/aws-s3": "<rootDir>/../libs/aws-s3/src",
+    "@grid-wars/aws-s3/(.*)": "<rootDir>/../libs/aws-s3/src/$1",
+    "@grid-wars/common": "<rootDir>/../libs/common/src",
+    "@grid-wars/common/(.*)": "<rootDir>/../libs/common/src/$1",
+    "@grid-wars/jwt": "<rootDir>/../libs/jwt/src",
+    "@grid-wars/jwt/(.*)": "<rootDir>/../libs/jwt/src/$1"
+  }
+}

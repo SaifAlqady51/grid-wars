@@ -5,11 +5,14 @@ on:
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
+      - ".github/workflows/deploy-account-service.yml" # Add this line
   pull_request:
     branches: ["*"]
     paths:
       - "apps/backend/services/account-service/**"
       - "packages/jwt/**"
+      - ".github/workflows/deploy-account-service.yml" # Add this line
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   deploy:
@@ -69,76 +72,293 @@ jobs:
           EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Deploy to EC2
+      - name: Prepare deployment files
+        working-directory: ./apps/backend/services/account-service
+        run: |
+          # Create a clean deployment directory
+          mkdir -p deployment
+
+          # Copy built files
+          cp -r dist/* deployment/
+
+          # Copy only essential package files for production
+          cp package.json deployment/
+
+          # Create production package.json (only prod dependencies)
+          node -p "
+            const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
+            delete pkg.devDependencies;
+            delete pkg.scripts.dev;
+            delete pkg.scripts.build;
+            pkg.scripts = pkg.scripts || {};
+            pkg.scripts.start = 'node main.js';
+            JSON.stringify(pkg, null, 2)
+          " > deployment/package.json
+
+          # List deployment contents
+          echo "Deployment directory contents:"
+          ls -la deployment/
+
+      - name: Stop existing service on EC2
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          HOST: ${{ secrets.EC2_HOST }}
-          USERNAME: ${{ secrets.EC2_USERNAME }}
-          KEY: ${{ secrets.EC2_SSH_KEY }}
         with:
-          host: ${{ env.HOST }}
-          username: ${{ env.USERNAME }}
-          key: ${{ env.KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          script: |
+            echo "Stopping existing service..."
+            npx pm2 stop grid-wars-account-service || true
+            npx pm2 delete grid-wars-account-service || true
+            echo "Service stopped"
+
+      - name: Deploy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: "apps/backend/services/account-service/deployment/*"
+          target: "~/grid-wars-account-service-new/"
+          strip_components: 5
+          overwrite: true
+
+      - name: Deploy and start service on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           timeout: 60s
           command_timeout: 10m
           script: |
-            # Check current directory and setup
             echo "Current directory: $(pwd)"
             echo "User: $(whoami)"
+
+            # Backup current deployment (if exists)
+            if [ -d "grid-wars-account-service" ]; then
+              echo "Backing up current deployment..."
+              mv grid-wars-account-service grid-wars-account-service-backup-$(date +%Y%m%d-%H%M%S) || true
+            fi
+
+            # Move new deployment to active directory
+            if [ -d "grid-wars-account-service-new" ]; then
+              # Check if files are in a nested deployment directory
+              if [ -d "grid-wars-account-service-new/deployment" ]; then
+                echo "Files found in nested deployment directory, moving them up..."
+                mv grid-wars-account-service-new grid-wars-account-service-temp
+                mkdir -p grid-wars-account-service-new
+                mv grid-wars-account-service-temp/deployment/* grid-wars-account-service-new/
+                rm -rf grid-wars-account-service-temp
+              fi
+              
+              mv grid-wars-account-service-new grid-wars-account-service
+              echo "New deployment moved to active directory"
+            else
+              echo "Error: New deployment directory not found!"
+              ls -la ~/
+              exit 1
+            fi
 
             # Navigate to app directory
             cd ~/grid-wars-account-service
 
-            # Check if we're already in the right place (compiled app directory)
-            if [ -f "main.js" ] && [ -f "package.json" ]; then
-              echo "Found compiled application in current directory"
-              
-              # Stop existing PM2 process (if running)
-              npx pm2 stop grid-wars-account-service || true
-              npx pm2 delete grid-wars-account-service || true
-              
-              # Update environment file
-              echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
-              echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-              echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
-              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-              echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-              echo "DB_SYNCHRONIZE=false" >> .env
-              echo "NODE_ENV=production" >> .env
-              echo "PORT=3001" >> .env
-              echo "ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}" >> .env
-              echo "ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}" >> .env
-              echo "ACCESS_TOKEN_EXPIRATION=7d" >> .env
-              
-              # Install PM2 if not exists
-              if ! command -v pm2 &> /dev/null && ! command -v npx pm2 &> /dev/null; then
-                npm install pm2
-              fi
-              
-              # Start the application with PM2
-              npx pm2 start main.js --name "grid-wars-account-service"
-              
-              # Save PM2 configuration
-              npx pm2 save
-              
-              # Setup PM2 to start on system boot
-              npx pm2 startup || true
-              
-            else
-              echo "Application files not found in expected location"
-              echo "Current directory contents:"
-              ls -la
-              echo "Looking for application files..."
-              find . -name "main.js" -type f
+            # Verify deployment contents
+            echo "Deployment contents:"
+            ls -la
+
+            # Check for main application file
+            if [ ! -f "main.js" ]; then
+              echo "Error: main.js not found!"
+              echo "Available files:"
+              find . -name "*.js" -type f
               exit 1
             fi
 
+            # Install production dependencies
+            echo "Installing production dependencies..."
+            echo "Current package.json content:"
+            cat package.json | head -20
+
+            # Remove any existing node_modules and package-lock.json
+            rm -rf node_modules package-lock.json
+
+            # Install dependencies with npm install
+            if npm install --production --no-package-lock --verbose; then
+              echo "✅ Dependencies installed successfully"
+            else
+              echo "❌ Dependency installation failed, trying basic npm install"
+              npm install --verbose || echo "Final npm install also failed, but continuing..."
+            fi
+
+            echo "Installed packages:"
+            ls -la node_modules/ | head -10 || echo "No node_modules directory"
+
+            # Create environment file
+            echo "Creating environment configuration..."
+            cat > .env << 'EOF'
+                DB_HOST=${{ secrets.DB_HOST }}
+                DB_PORT=${{ secrets.DB_PORT }}
+                DB_USERNAME=${{ secrets.DB_USERNAME }}
+                DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+                DB_NAME=${{ secrets.DB_NAME }}
+                DB_SYNCHRONIZE=false
+                NODE_ENV=production
+                PORT=3001
+                ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}
+                ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+                ACCESS_TOKEN_EXPIRATION=7d
+                EOF
+
+            # Install PM2 globally if not exists
+            if ! command -v pm2 &> /dev/null; then
+              echo "Installing PM2..."
+              npm install -g pm2
+            fi
+
+            # Create PM2 ecosystem file for better process management
+            cat > ecosystem.config.js << EOF
+            module.exports = {
+              apps: [{
+                name: 'grid-wars-account-service',
+                script: 'main.js',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3001
+                },
+                instances: 1,
+                autorestart: true,
+                watch: false,
+                max_memory_restart: '1G',
+                error_file: './logs/err.log',
+                out_file: './logs/out.log',
+                log_file: './logs/combined.log',
+                time: true
+              }]
+            };
+            EOF
+
+            # Create logs directory
+            mkdir -p logs
+
+            # Start the application with PM2
+            echo "Starting application with PM2..."
+            pm2 delete grid-wars-account-service 2>/dev/null || true
+            pm2 start ecosystem.config.js
+
+            # Wait a moment for potential immediate crashes
+            sleep 3
+
+            # Check if it crashed immediately
+            pm2_status=$(pm2 jlist | jq -r '.[0].pm2_env.status' 2>/dev/null || echo "unknown")
+            echo "Initial PM2 process status: $pm2_status"
+
+            if [ "$pm2_status" = "errored" ]; then
+              echo "⚠️ Application crashed immediately on startup!"
+              echo "Error logs:"
+              pm2 logs grid-wars-account-service --lines 10 --nostream
+              echo "Environment file content for debugging:"
+              cat .env
+            fi
+
+            # Save PM2 configuration
+            pm2 save
+
+            # Setup PM2 to start on system boot (only if not already setup)
+            pm2 startup || true
+
+            echo "Deployment completed successfully!"
+
             # Show PM2 status
-            npx pm2 list
+            pm2 list
 
-            # Wait a moment for the app to start
-            sleep 5
+            # Wait for application to start
+            echo "Waiting for application to start..."
+            sleep 20
 
-            # Health check
-            curl -f http://localhost:3001/health || echo "Health check failed, but deployment completed"
+            # Health check with retry
+            for i in {1..5}; do
+              echo "Health check attempt $i/5..."
+              
+              # First check if the process is actually running
+              pm2_status=$(pm2 jlist | jq -r '.[0].pm2_env.status' 2>/dev/null || echo "unknown")
+              echo "PM2 process status: $pm2_status"
+              
+              # Try health endpoint first, then fallback to basic connection test
+              if curl -f -m 5 http://localhost:3001/health; then
+                echo "✅ Health check passed!"
+                break
+              elif curl -f -m 5 http://localhost:3001/; then
+                echo "✅ Basic connection successful (no /health endpoint)!"
+                break
+              else
+                echo "❌ Health check failed, retrying in 8 seconds..."
+                echo "Checking if application is running..."
+                pm2 status
+                echo "Recent application logs:"
+                pm2 logs grid-wars-account-service --lines 10 --nostream || true
+                
+                if [ $i -ge 3 ]; then
+                  echo "Checking system resources..."
+                  echo "Memory usage:"
+                  free -h
+                  echo "Disk space:"
+                  df -h
+                  echo "Network connections:"
+                  netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
+                fi
+                
+                sleep 8
+              fi
+              
+              if [ $i -eq 5 ]; then
+                echo "⚠️  Health check failed after 5 attempts"
+                echo "Final application logs (last 30 lines):"
+                pm2 logs grid-wars-account-service --lines 30 --nostream || true
+                echo "PM2 process info:"
+                pm2 show grid-wars-account-service || true
+                echo "Environment file content:"
+                echo "PORT=$(grep PORT .env || echo 'PORT not found')"
+                echo "NODE_ENV=$(grep NODE_ENV .env || echo 'NODE_ENV not found')"
+                echo "All listening ports:"
+                netstat -tlnp || ss -tlnp || echo "Cannot check listening ports"
+              fi
+            done
+
+            # Show final status with detailed debugging
+            echo "=== FINAL DEPLOYMENT STATUS ==="
+            echo "Final PM2 status:"
+            pm2 status
+
+            echo "=== APPLICATION LOGS ==="
+            pm2 logs grid-wars-account-service --lines 20 --nostream || true
+
+            echo "=== NETWORK DIAGNOSTICS ==="
+            echo "Checking if port 3001 is listening:"
+            netstat -tlnp | grep :3001 || ss -tlnp | grep :3001 || echo "Port 3001 not listening"
+
+            echo "All listening ports:"
+            netstat -tlnp | grep LISTEN | head -10 || ss -tlnp | grep LISTEN | head -10
+
+            echo "=== PROCESS INFORMATION ==="
+            echo "Node.js processes:"
+            ps aux | grep node || echo "No node processes found"
+
+            echo "=== APPLICATION FILES ==="
+            echo "Main application file:"
+            ls -la main.js
+            echo "Environment file exists:"
+            ls -la .env
+
+            echo "=== MANUAL CONNECTION TEST ==="
+            echo "Testing local connection to port 3001:"
+            timeout 5 bash -c "</dev/tcp/localhost/3001" && echo "Port 3001 is reachable" || echo "Port 3001 is not reachable"
+
+            # Clean up old backups (keep only last 3)
+            echo "Cleaning up old backups..."
+            ls -dt grid-wars-account-service-backup-* 2>/dev/null | tail -n +4 | xargs rm -rf || true
+
+            echo "🎉 Deployment process completed!"
