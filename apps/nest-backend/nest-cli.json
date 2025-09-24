@@ -34,6 +34,15 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
+    "game-service": {
+      "type": "application",
+      "root": "apps/game-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/game-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/game-service/tsconfig.app.json"
+      }
+    },
     "jwt": {
       "type": "library",
       "root": "libs/jwt",
