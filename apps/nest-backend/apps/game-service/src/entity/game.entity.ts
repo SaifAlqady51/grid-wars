@@ -102,6 +102,7 @@ export class Game {
     type: 'enum',
     enum: Symbol,
     default: Symbol.X,
+    enumName: 'symbol_enum',
     name: 'player1_symbol',
   })
   player1Symbol: Symbol;
@@ -115,6 +116,7 @@ export class Game {
     type: 'enum',
     enum: Symbol,
     default: Symbol.O,
+    enumName: 'symbol_enum',
     name: 'player2_symbol',
   })
   player2Symbol: Symbol;
