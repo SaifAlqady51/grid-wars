@@ -1,5 +1,5 @@
 {
-  "name": "account-service",
+  "name": "nest-backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -18,39 +18,29 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
-    "db:restart": "docker compose restart",
-    "db:logs": "docker compose logs -f",
-    "db:shell": "docker exec -it account_service_db psql -U postgres -d account_database",
-    "copy-env": "cp .env dist/.env",
-    "copy-package": "cp package.json dist/package.json",
-    "build-with-package": "npm run build && npm run copy-package && npm run copy-env"
+    "account-service:db:up": "docker-compose -f ./apps/account-service/docker-compose.dev.yml up -d db",
+    "account-service:db:down": "docker-compose -f ./apps/account-service/docker-compose.dev.yml down db",
+    "account-service:db:shell": "docker-compose -f ./apps/account-service/docker-compose.dev.yml exec db psql -U postgres -d account_db",
+    "account-service:db:logs": "docker-compose -f ./apps/account-service/docker-compose.dev.yml logs -f db",
+    "account-service:db:restart": "docker-compose -f ./apps/account-service/docker-compose.dev.yml restart db",
+    "game-service:db:up": "docker-compose -f ./apps/game-service/docker-compose.dev.yml up -d db",
+    "game-service:db:down": "docker-compose -f ./apps/game-service/docker-compose.dev.yml down db",
+    "game-service:db:shell": "docker-compose -f ./apps/game-service/docker-compose.dev.yml exec db psql -U postgres -d game_db",
+    "game-service:db:logs": "docker-compose -f ./apps/game-service/docker-compose.dev.yml logs -f db",
+    "game-service:db:restart": "docker-compose -f ./apps/game-service/docker-compose.dev.yml restart db"
   },
   "dependencies": {
-    "@grid-wars/jwt": "file:../../../../packages/jwt/src",
-    "@grid-wars/common": "file:../../libs/common/src",
-    "@aws-sdk/client-s3": "^3.888.0",
+    "@aws-sdk/client-s3": "^3.894.0",
     "@nestjs/common": "^11.0.1",
-    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
-    "@nestjs/jwt": "^11.0.0",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.6",
-    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.2",
-    "install": "^0.13.0",
-    "ms": "^2.1.3",
-    "npm": "^11.6.0",
-    "passport-jwt": "^4.0.1",
+    "express": "^5.1.0",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.26",
-    "uuid": "^13.0.0"
+    "typeorm": "^0.3.27"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -61,13 +51,9 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/ms": "^2.1.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
-    "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
-    "@types/uuid": "^10.0.0",
-    "aws-sdk-client-mock": "^4.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -76,7 +62,6 @@
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
-    "swagger-typescript-api": "^13.2.9",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
@@ -90,7 +75,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -98,12 +83,16 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src/",
+      "<rootDir>/libs/"
+    ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1",
-      "^@account/(.*)$": "<rootDir>/account/$1",
-      "^@aws-s3/(.*)$": "<rootDir>/aws-s3/$1"
+      "^@grid-wars/aws-s3(|/.*)$": "<rootDir>/libs/aws-s3/src/$1",
+      "^@grid-wars/common(|/.*)$": "<rootDir>/libs/common/src/$1",
+      "^@grid-wars/jwt(|/.*)$": "<rootDir>/libs/jwt/src/$1"
     }
   }
 }

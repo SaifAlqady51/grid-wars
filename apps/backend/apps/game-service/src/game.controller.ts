@@ -1,14 +1,14 @@
 import { Body, Controller, HttpStatus, Post, Req } from '@nestjs/common';
 import { GameService } from './game.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ApiResponseDto } from '@grid-wars/common';
+import { ApiResponseDto } from '@grid-wars/common/dto';
 import { CreateGameDto } from './dto';
 import { Game } from './entity';
 import { UseAuth } from '@grid-wars/jwt';
 
 @Controller('games')
 export class GameController {
-  constructor(private readonly appService: GameService) { }
+  constructor(private readonly appService: GameService) {}
 
   @Post('create-game')
   @UseAuth
