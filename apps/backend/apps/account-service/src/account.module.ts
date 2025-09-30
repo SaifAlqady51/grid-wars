@@ -16,7 +16,10 @@ import * as process from 'process';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [resolve(process.cwd(), 'apps/account-service/.env')],
+      envFilePath: [
+        resolve(process.cwd(), '.env'),
+        resolve(process.cwd(), 'apps/account-service/.env'),
+      ],
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forRootAsync({
