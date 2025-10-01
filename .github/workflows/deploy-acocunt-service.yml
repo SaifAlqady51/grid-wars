@@ -6,6 +6,11 @@ on:
     paths:
       - "apps/backend/apps/account-service/**"
       - ".github/workflows/deploy-account-service.yml"
+  pull_request:
+    branches: ["*"]
+    paths:
+      - "apps/backend/apps/account-service/**"
+      - ".github/workflows/deploy-account-service.yml"
   workflow_dispatch:
 
 jobs:
@@ -20,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: |
             apps/backend/apps/account-service/package-lock.json
