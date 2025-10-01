@@ -64,7 +64,7 @@ jobs:
             delete pkg.devDependencies;
             pkg.scripts = { start: 'node src/main.js' };
             console.log(JSON.stringify(pkg, null, 2));
-          " > package.json
+          " > apps/backend/package.json
 
       - name: Upload account-service to EC2
         uses: appleboy/scp-action@v0.1.7
