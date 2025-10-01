@@ -52,12 +52,15 @@ jobs:
           echo "Contents of dist/apps/account-service:"
           ls -al dist/apps/account-service || echo "dist/apps/account-service not found"
 
+          echo "Contents of deploy"
+          ls -al deploy/ || echo "deploy folder not found"
+
           echo "Now copying files..."
 
           mkdir -p deploy/src
 
           cp -r dist/apps/account-service/src/*  deploy/src
-          cp -r dist/libs/* deploy/ || true
+          cp -r dist/libs/* deploy || true
 
           cp  package.json .
 
