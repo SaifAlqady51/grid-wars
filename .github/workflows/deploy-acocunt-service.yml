@@ -73,6 +73,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "apps/backend/deploy/*"
           target: "~/apps/src/account-service"
+          strip_components: 3
 
       - name: Run setup on EC2
         uses: appleboy/ssh-action@v0.1.10
