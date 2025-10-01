@@ -34,6 +34,12 @@ jobs:
         working-directory: ./apps/backend
         run: npm run build
 
+      - name: List dist contents
+        working-directory: ./apps/backend
+        run: |
+          echo "=== dist directory tree ==="
+          ls -R ./dist || true
+
       - name: Prepare deployment files
         working-directory: ./apps/backend
         run: |
