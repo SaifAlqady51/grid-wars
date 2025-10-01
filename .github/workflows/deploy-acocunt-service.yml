@@ -26,9 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "npm"
-          cache-dependency-path: |
-            apps/backend/apps/account-service/package-lock.json
 
       - name: Install root dependencies
         run: npm ci
