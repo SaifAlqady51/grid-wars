@@ -43,6 +43,9 @@ jobs:
       - name: Prepare deployment files
         working-directory: ./apps/backend
         run: |
+
+          mkdir -p deploy/src
+
           echo "Current directory:"
           pwd
 
@@ -57,12 +60,11 @@ jobs:
 
           echo "Now copying files..."
 
-          mkdir -p deploy/src
 
           cp -r dist/apps/account-service/src/*  deploy/src
           cp -r dist/libs/* deploy || true
 
-          cp  package.json .
+          cp package.json deploy/package.json
 
       - name: Upload account-service to EC2
         uses: appleboy/scp-action@v0.1.7
