@@ -31,16 +31,12 @@ jobs:
         run: npm install
 
       - name: Build account-service
-        working-directory: ./apps/backend/apps/account-service
+        working-directory: ./apps/backend
         run: npm run build
 
       - name: Prepare deployment files
-        working-directory: ./apps/backend/apps/account-service
+        working-directory: ./apps/backend
         run: |
-          rm -rf ~/grid-wars-account-service
-
-          mkdir -p ~/grid-wars-account-service
-          # Copy build outputs into the service folder
           cp -r ../dist/apps/account-service/* .
           cp -r ../dist/libs/* . || true
 
