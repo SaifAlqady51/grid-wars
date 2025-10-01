@@ -41,8 +41,8 @@ jobs:
 
           mkdir -p ~/grid-wars-account-service
           # Copy build outputs into the service folder
-          cp -r ../../dist/apps/account-service/* .
-          cp -r ../../dist/libs/* . || true
+          cp -r ../dist/apps/account-service/* .
+          cp -r ../dist/libs/* . || true
 
           # Overwrite package.json with production-only
           node -p "
