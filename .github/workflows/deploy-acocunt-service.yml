@@ -54,8 +54,10 @@ jobs:
 
           echo "Now copying files..."
 
-          cp -r dist/apps/account-service/src/* .
-          cp -r dist/libs/* . || true
+          mkdir -p deploy/src
+
+          cp -r dist/apps/account-service/src/*  deploy/src
+          cp -r dist/libs/* deploy/ || true
 
           cp  package.json .
 
