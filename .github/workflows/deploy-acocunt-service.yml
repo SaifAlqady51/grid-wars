@@ -48,7 +48,7 @@ jobs:
 
           echo "Now copying files..."
 
-          cp -r ./dist/apps/account-service/* .
+          cp -r ./dist/apps/account-service/src/* .
           cp -r ./dist/libs/* . || true
 
           # Overwrite package.json with production-only
