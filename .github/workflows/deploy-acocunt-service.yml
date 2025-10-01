@@ -37,8 +37,19 @@ jobs:
       - name: Prepare deployment files
         working-directory: ./apps/backend
         run: |
-          cp -r dist/apps/account-service/* .
-          cp -r dist/libs/* . || true
+          echo "Current directory:"
+          pwd
+
+          echo "Contents of this directory:"
+          ls -al
+
+          echo "Contents of dist/apps/account-service:"
+          ls -al ./dist/apps/account-service || echo "dist/apps/account-service not found"
+
+          echo "Now copying files..."
+
+          cp -r ./dist/apps/account-service/* .
+          cp -r ./dist/libs/* . || true
 
           # Overwrite package.json with production-only
           node -p "
