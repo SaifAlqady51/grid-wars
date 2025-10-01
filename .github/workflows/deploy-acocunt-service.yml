@@ -28,7 +28,7 @@ jobs:
           node-version: "24"
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build account-service
         working-directory: ./apps/backend/apps/account-service
