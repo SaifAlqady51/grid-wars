@@ -37,8 +37,8 @@ jobs:
       - name: Prepare deployment files
         working-directory: ./apps/backend
         run: |
-          cp -r ../dist/apps/account-service/* .
-          cp -r ../dist/libs/* . || true
+          cp -r dist/apps/account-service/* .
+          cp -r dist/libs/* . || true
 
           # Overwrite package.json with production-only
           node -p "
