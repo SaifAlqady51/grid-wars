@@ -61,8 +61,7 @@ jobs:
           echo "Now copying files..."
 
 
-          cp -r dist/apps/account-service/src/*  deploy/src
-          cp -r dist/libs/* deploy || true
+          cp -r dist/*  deploy/
 
           cp package.json deploy/package.json
 
@@ -72,8 +71,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "apps/backend/apps/account-service/*"
-          target: "~/account-service"
+          source: "apps/backend/deploy/*"
+          target: "~/apps/src/account-service"
 
       - name: Run setup on EC2
         uses: appleboy/ssh-action@v0.1.10
