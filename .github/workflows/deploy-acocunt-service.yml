@@ -27,9 +27,6 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install root dependencies
-        run: npm install
-
       - name: Build account-service
         working-directory: ./apps/backend
         run: npx nest build account-service
@@ -57,14 +54,7 @@ jobs:
           cp -r dist/apps/account-service/src/* .
           cp -r dist/libs/* . || true
 
-          # Overwrite package.json with production-only
-          node -p "
-            const fs = require('fs');
-            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            delete pkg.devDependencies;
-            pkg.scripts = { start: 'node src/main.js' };
-            console.log(JSON.stringify(pkg, null, 2));
-          " > apps/backend/package.json
+          cp  package.json .
 
       - name: Upload account-service to EC2
         uses: appleboy/scp-action@v0.1.7
