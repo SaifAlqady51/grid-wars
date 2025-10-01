@@ -32,7 +32,7 @@ jobs:
 
       - name: Build account-service
         working-directory: ./apps/backend
-        run: npm run build
+        run: nest build account-service
 
       - name: List dist contents
         working-directory: ./apps/backend
