@@ -103,4 +103,4 @@ jobs:
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             EOF
 
-            nohup node src/main.js > out.log 2>&1 &
+            nohup node apps/account-service/src/main.js > out.log 2>&1 &
