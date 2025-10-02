@@ -21,7 +21,7 @@ import { AccountValidatorService, PasswordService } from './validation/';
 import { RegisterDto, LoginDto, UpdateUsernameDto } from './dto';
 import { JwtAuthService } from '@grid-wars/jwt';
 import { Account } from './entity/account.entity';
-import { AwsS3Service } from '../aws-s3/aws-s3.service';
+import { AwsS3Service } from '@grid-wars/aws-s3';
 
 describe('AccountService', () => {
   let service: AccountService;
