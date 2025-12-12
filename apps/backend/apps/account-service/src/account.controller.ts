@@ -30,6 +30,7 @@ import {
 import { JwtPayload, UseAuth, type UserPayload } from '@grid-wars/jwt';
 import { Account } from './entity/account.entity';
 import { ApiResponseDto } from '@grid-wars/common/dto';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('accounts')
 @IncludeAllModels()
@@ -190,5 +191,11 @@ export class AccountController {
       timestamp: new Date().toISOString(),
       status: HttpStatus.OK,
     });
+  }
+  @MessagePattern({ cmd: 'verify_users' })
+  async verifyUsers(@Payload() data: { userId: string }) {
+    const user = await this.accountService.findUserById(data.userId);
+
+    return user;
   }
 }
