@@ -8,6 +8,9 @@ import { JwtAuthModule } from '@grid-wars/jwt';
 import * as process from 'process';
 import { Game } from './entity/game.entity';
 import { GameMove } from './entity';
+import { CreateGameUseCase } from './use-case/create-game.use-case';
+import { GameRepository } from '../database/game-repository';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -32,8 +35,18 @@ import { GameMove } from './entity';
     }),
     TypeOrmModule.forFeature([Game, GameMove]),
     JwtAuthModule.forRootAsync({ isGlobal: false }),
+    ClientsModule.register([
+      {
+        name: 'ACCOUNT_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: '0.0.0.0',
+          port: 4001,
+        },
+      },
+    ]),
   ],
   controllers: [GameController],
-  providers: [GameService],
+  providers: [GameService, CreateGameUseCase, GameRepository],
 })
 export class GameModule { }
