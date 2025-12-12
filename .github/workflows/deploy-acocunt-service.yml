@@ -24,7 +24,7 @@ jobs:
             # If your repo is not cloned yet, clone it
             if [ ! -d "grid-wars" ]; then
               echo "Cloning repository..."
-              git clone https://${{ secrets.ACCESS_TOKEN_KEY }}@github.com/SaifAlqady51/grid-wars.git
+              git clone https://${{ secrets.ACCESS_TOKEN_KEY }}@github.com/SaifAlqady51/grid-wars.git main
             fi
 
             # Go to repo folder
