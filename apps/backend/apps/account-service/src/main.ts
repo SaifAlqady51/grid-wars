@@ -3,6 +3,7 @@ import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
 import * as process from 'process';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AccountModule } from './account.module';
 import {
   ValidationExceptionFilter,
@@ -11,6 +12,16 @@ import {
 
 async function bootstrap() {
   const app = await NestFactory.create(AccountModule);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: 4001,
+    },
+  });
+
+  await app.startAllMicroservices();
 
   app.useGlobalFilters(
     new ValidationExceptionFilter(),

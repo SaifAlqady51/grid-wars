@@ -213,4 +213,11 @@ export class AccountService {
       throw new InternalServerErrorException('Failed to upload profile image');
     }
   }
+
+  async findUserById(userId: string): Promise<Account | null> {
+    const account = await this.accountRepository.findOne({
+      where: { id: userId, isActive: true },
+    });
+    return account || null;
+  }
 }
