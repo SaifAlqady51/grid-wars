@@ -1,14 +1,14 @@
 import { Body, Controller, HttpStatus, Post, Req } from '@nestjs/common';
-import { GameService } from './game.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ApiResponseDto } from '@grid-wars/common/dto';
 import { CreateGameDto } from './dto';
 import { Game } from './entity';
 import { UseAuth } from '@grid-wars/jwt';
+import { CreateGameUseCase } from './use-case/create-game.use-case';
 
 @Controller('games')
 export class GameController {
-  constructor(private readonly appService: GameService) {}
+  constructor(private readonly createGameUseCase: CreateGameUseCase) { }
 
   @Post('create-game')
   @UseAuth
@@ -22,7 +22,7 @@ export class GameController {
     @Body() createGameDto: CreateGameDto,
     @Req() request: Request,
   ): Promise<ApiResponseDto<Game>> {
-    const game = await this.appService.createGame(createGameDto);
+    const game = await this.createGameUseCase.execute(createGameDto);
     return new ApiResponseDto<Game>({
       data: game,
       message: 'Game created successfully',
