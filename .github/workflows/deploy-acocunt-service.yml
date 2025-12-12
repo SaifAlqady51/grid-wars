@@ -1,106 +1,49 @@
-name: Deploy Account Service to EC2
+name: Deployment pipeline (Account Service)
 
 on:
-  push:
-    branches: ["*"]
-    paths:
-      - "apps/backend/apps/account-service/**"
-      - ".github/workflows/deploy-account-service.yml"
-  pull_request:
-    branches: ["*"]
-    paths:
-      - "apps/backend/apps/account-service/**"
-      - ".github/workflows/deploy-account-service.yml"
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: secrets
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build account-service
-        working-directory: ./apps/backend
-        run: npx nest build account-service
-
-      - name: List dist contents
-        working-directory: ./apps/backend
-        run: |
-          echo "=== dist directory tree ==="
-          ls -R ./dist || true
-
-      - name: Prepare deployment files
-        working-directory: ./apps/backend
-        run: |
-
-          mkdir -p deploy/src
-
-          echo "Current directory:"
-          pwd
-
-          echo "Contents of this directory:"
-          ls -al
-
-          echo "Contents of dist/apps/account-service:"
-          ls -al dist/apps/account-service || echo "dist/apps/account-service not found"
-
-          echo "Contents of deploy"
-          ls -al deploy/ || echo "deploy folder not found"
-
-          echo "Now copying files..."
-
-
-          cp -r dist/*  deploy/
-
-          cp package.json deploy/package.json
-
-      - name: Upload account-service to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy account-service to dev server
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
+          username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "apps/backend/deploy/*"
-          target: "~/account-service"
-          strip_components: 3
-
-      - name: Run setup on EC2
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 15m
           script: |
-            cd ~/account-service
-            npm cache clean --force
-            npm install --omit=dev
-            cat > .env << EOF
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_SYNCHRONIZE=${{ secrets.DB_SYNCHRONIZE }}
-            ACCESS_TOKEN_SECURITY_KEY=${{ secrets.ACCESS_TOKEN_SECURITY_KEY }}
-            ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
-            ACCESS_TOKEN_EXPIRATION=${{ secrets.ACCESS_TOKEN_EXPIRATION }}
-            NODE_ENV=production
-            PORT=${{ secrets.PORT }}
-            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
-            AWS_S3_REGION=${{ secrets.AWS_S3_REGION }}
-            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            EOF
+            echo "===== Going to deployment directory ====="
+            cd /srv
 
-            nohup node apps/account-service/src/main.js > out.log 2>&1 &
+            # If your repo is not cloned yet, clone it
+            if [ ! -d "grid-wars" ]; then
+              echo "Cloning repository..."
+              git clone https://${{ secrets.ACCESS_TOKEN_KEY }}@github.com/SaifAlqady51/grid-wars.git
+            fi
+
+            # Go to repo folder
+            cd grid-wars
+
+            echo "===== Pulling latest code from main branch ====="
+            git checkout main 
+            git pull https://${{ secrets.ACCESS_TOKEN_KEY }}@github.com/SaifAlqady51/grid-wars.git main 
+
+            echo "===== Rebuilding and restarting account-service container ====="
+            docker compose up -d --build account-service
+
+            echo "===== Cleaning up unused Docker resources ====="
+            docker system prune -f
+
+            sleep 5
+
+            echo "===== CONTAINER STATUS ====="
+            docker ps -a
+
+            echo "===== ACCOUNT-SERVICE LOGS ====="
+            docker logs account-service
