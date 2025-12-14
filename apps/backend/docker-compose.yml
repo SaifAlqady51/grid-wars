@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  account_db:
+    image: postgres:15-alpine
+    container_name: account_service_db
+    environment:
+      POSTGRES_DB: account_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5434:5432'
+    volumes:
+      - account_postgres_data:/var/lib/postgresql/data
+    networks:
+      - account_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - account
+      - all
+
+  game_db:
+    image: postgres:15-alpine
+    container_name: game_service_db
+    env_file:
+      - ./apps/game-service/.env
+    environment:
+      POSTGRES_DB: game_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5433:5432'
+    volumes:
+      - game_postgres_data:/var/lib/postgresql/data
+    networks:
+      - game_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - game
+      - all
+
+volumes:
+  account_postgres_data:
+  game_postgres_data:
+
+networks:
+  account_network:
+    driver: bridge
+  game_network:
+    driver: bridge
