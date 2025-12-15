@@ -15,9 +15,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
 
+    const exceptionResponse = exception.getResponse();
+
+    let detailedMessage = exception.message;
+
+    if (typeof exceptionResponse === 'string') {
+      detailedMessage = exceptionResponse;
+    } else if (
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse['message']
+    ) {
+      detailedMessage = exceptionResponse['message'][0].constraints.matches;
+    }
+
     const apiResponse = new ApiResponseDto({
       data: null,
-      message: exception.message,
+      message: detailedMessage,
       error: true,
       timestamp: new Date().toISOString(),
       path: request.url,
