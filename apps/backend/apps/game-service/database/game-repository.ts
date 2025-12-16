@@ -34,4 +34,19 @@ export class GameRepository implements IGameRepository {
       where: conditions,
     });
   }
+  async completeGame(gameId: string): Promise<Game | null> {
+    const completedGame = await this.gameRepository.update(
+      { id: gameId },
+      {
+        gameStatus: GameStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+    );
+
+    if (completedGame.affected === 0) {
+      return null;
+    }
+
+    return await this.gameRepository.findOne({ where: { id: gameId } });
+  }
 }

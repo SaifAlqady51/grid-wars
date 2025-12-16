@@ -6,4 +6,5 @@ export interface IGameRepository {
     player1Id: string,
     player2Id?: string,
   ): Promise<Game | null>;
+  completeGame(gameId: string): Promise<Game | null>;
 }
