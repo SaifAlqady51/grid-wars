@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { resolve } from 'path';
-import { GameService } from './game.service';
 import { GameController } from './game.controller';
 import { JwtAuthModule } from '@grid-wars/jwt';
 import * as process from 'process';
@@ -11,6 +10,7 @@ import { GameMove } from './entity';
 import { CreateGameUseCase } from './use-case/create-game.use-case';
 import { GameRepository } from '../database/game-repository';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { completeGameUseCase } from './use-case/complete-game.use-case';
 
 @Module({
   imports: [
@@ -47,6 +47,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]),
   ],
   controllers: [GameController],
-  providers: [GameService, CreateGameUseCase, GameRepository],
+  providers: [CreateGameUseCase, completeGameUseCase, GameRepository],
 })
 export class GameModule { }
